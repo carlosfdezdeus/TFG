@@ -48,15 +48,18 @@ def is_port_range_subset(port1, port2):
 # ************************************************************************** #
 
 def is_redundant(rule1: Dict, rule2: Dict) -> bool:
-    source_match = all(any(is_subnet_of(src2, src1) for src1 in rule1["Source"]) for src2 in rule2["Source"])
-    #print(f"Source_match: {source_match}")
-    destination_match = all(any(is_subnet_of(dst2, dst1) for dst1 in rule1["Destination"]) for dst2 in rule2["Destination"])
-    #print(f"Destination_match: {destination_match}")
-    service_match = any(any(is_port_range_subset(srv1, srv2) or is_port_range_subset(srv2, srv1) for srv1 in rule1["Service"]) for srv2 in rule2["Service"])    # "ANY" hataa que service_match sea True en cualquiera de las reglas
-    #print(f"Service_match: {service_match}")
-    action_match = rule1["Action"] == rule2["Action"]
-    #print(f"Action_match: {action_match}")
-    return source_match and destination_match and service_match and action_match
+    if "Enabled" in rule1["Status"] and "Enabled" in rule2["Status"]:
+        source_match = all(any(is_subnet_of(src2, src1) for src1 in rule1["Source"]) for src2 in rule2["Source"])
+        #print(f"Source_match: {source_match}")
+        destination_match = all(any(is_subnet_of(dst2, dst1) for dst1 in rule1["Destination"]) for dst2 in rule2["Destination"])
+        #print(f"Destination_match: {destination_match}")
+        service_match = any(any(is_port_range_subset(srv1, srv2) or is_port_range_subset(srv2, srv1) for srv1 in rule1["Service"]) for srv2 in rule2["Service"])    # "ANY" hataa que service_match sea True en cualquiera de las reglas
+        #print(f"Service_match: {service_match}")
+        action_match = rule1["Action"] == rule2["Action"]
+        #print(f"Action_match: {action_match}")
+        return source_match and destination_match and service_match and action_match
+    else: 
+        return False
 
 def find_redundant_rules(rules: List[Dict]) -> List[Dict]:
     """Encuentra reglas redundantes en la lista de reglas."""
@@ -73,16 +76,18 @@ def find_redundant_rules(rules: List[Dict]) -> List[Dict]:
 def rule_have_x_any(rule):
     quantity = 0
     have_any = False
-    if rule["Source"] == "ANY":
-        quantity += 1
-        have_any = True
-    if rule["Destination"] == "ANY":
-        quantity += 1
-        have_any = True
-    if rule["Service"] == "ANY":
-        quantity += 1
-        have_any = True
+    if "Enabled" in rule["Status"]:
+        if rule["Source"] == "ANY":
+            quantity += 1
+            have_any = True
+        if rule["Destination"] == "ANY":
+            quantity += 1
+            have_any = True
+        if rule["Service"] == "ANY":
+            quantity += 1
+            have_any = True
     return have_any, quantity
+    
 
 def find_any_in_rules(rules: List[Dict]) -> List[Dict]:
     rules_with_any = []
@@ -100,10 +105,11 @@ def find_any_in_rules(rules: List[Dict]) -> List[Dict]:
 # ************************************************************************** #
 def have_insecure_protocols(rule):
     """Verifica si una regla contiene servicios considerados inseguros."""
-    for service in rule["Service"]:
-        for protocol, port in STRICT_POLICY_INSECURE_PROTOCOLS.items():
-            if is_port_range_subset(service, str(port)):
-                return True
+    if "Enabled" in rule["Status"]:
+        for service in rule["Service"]:
+            for protocol, port in STRICT_POLICY_INSECURE_PROTOCOLS.items():
+                if is_port_range_subset(service, str(port)):
+                    return True
     return False
 
 def find_insecure_rules(rules: List[Dict]) -> List[Dict]:
@@ -122,10 +128,11 @@ def is_remaining_traffic_denied(rules: List[Dict]) -> bool:
         return False
     
     last_rule = rules[-1]  # Última regla
-    if last_rule["Action"].upper() != "DENY":
-        return False
-    
-    if last_rule["Source"] == ["ANY"] and last_rule["Destination"] == ["ANY"] and last_rule["Service"] == ["ANY"]:
-        return True
-    
+    if "Enabled" in last_rule["Status"]:
+        if last_rule["Action"].upper() != "DENY":
+            return False
+        
+        if last_rule["Source"] == ["ANY"] and last_rule["Destination"] == ["ANY"] and last_rule["Service"] == ["ANY"]:
+            return True
+        
     return False

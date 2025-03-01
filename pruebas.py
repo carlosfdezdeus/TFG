@@ -22,42 +22,48 @@ redundant_rule1 = {
     "Source": ["192.168.1.0/24"],
     "Destination": ["10.0.0.0/16"],
     "Service": ["443"],
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }
 
 redundant_rule2 = {
     "Source": ["192.168.1.100"],
     "Destination": ["10.0.0.50"],
     "Service": ["443"],
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Redundante con redundant_rule1 (source, destination y service están contenidos)
 
 redundant_rule3 = {
     "Source": ["10.1.1.0/24"],
     "Destination": ["192.168.10.0/24"],
     "Service": ["22-24"],
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }
 
 redundant_rule4 = {
     "Source": ["10.1.1.50"],
     "Destination": ["192.168.10.5"],
     "Service": ["23"],
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Redundante con redundant_rule3 (source, destination y service están dentro de los rangos)
 
 redundant_rule5 = {
     "Source": ["ANY"],
     "Destination": ["10.10.10.0/24"],
     "Service": ["ANY"],
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }
 
 redundant_rule6 = {
     "Source": ["192.168.100.0/24"],
     "Destination": ["10.10.10.50"],
     "Service": ["80"],
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Redundante con redundant_rule5 (ANY lo abarca todo)
 
 # Ejecutamos pruebas
@@ -71,14 +77,16 @@ ruleA = {
     "Source": ["192.168.10.0/24"],
     "Destination": ["10.0.0.0/16"],
     "Service": ["443"],
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }
 
 ruleB = {
     "Source": ["192.168.20.0/24"],  # No hay solape con ruleA
     "Destination": ["10.0.0.0/16"],
     "Service": ["443"],
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }
 print(f"    {is_redundant(ruleA, ruleB)}")  # False
 
@@ -87,14 +95,16 @@ ruleC = {
     "Source": ["192.168.1.0/24"],
     "Destination": ["10.10.0.0/16"],
     "Service": ["80"],
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }
 
 ruleD = {
     "Source": ["192.168.1.0/24"],
     "Destination": ["10.20.0.0/16"],  # Destino distinto
     "Service": ["80"],
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }
 print(f"    {is_redundant(ruleC, ruleD)}")  # False
 
@@ -103,14 +113,16 @@ ruleE = {
     "Source": ["10.0.0.0/8"],
     "Destination": ["192.168.0.0/16"],
     "Service": ["22-24"],  # SSH y Telnet
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }
 
 ruleF = {
     "Source": ["10.0.0.0/8"],
     "Destination": ["192.168.0.0/16"],
     "Service": ["25"],  # SMTP (no está en 22-24)
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }
 print(f"    {is_redundant(ruleE, ruleF)}")  # False
 
@@ -119,14 +131,16 @@ ruleG = {
     "Source": ["10.0.0.0/24"],
     "Destination": ["192.168.1.0/24"],
     "Service": ["443"],
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }
 
 ruleH = {
     "Source": ["10.0.0.0/24"],
     "Destination": ["192.168.1.0/24"],
     "Service": ["443"],
-    "Action": "DENY"  # Diferente acción
+    "Action": "DENY",   # Accion distinta
+    "Status": "Enabled"
 }
 print(f"    {is_redundant(ruleG, ruleH)}")  # False
 
@@ -135,14 +149,16 @@ ruleI = {
     "Source": ["172.16.1.0/24"],
     "Destination": ["192.168.100.0/24"],
     "Service": ["3389"],  # RDP
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }
 
 ruleJ = {
     "Source": ["10.10.10.0/24"],  # Origen distinto
     "Destination": ["10.20.20.0/24"],  # Destino distinto
     "Service": ["53"],  # DNS, servicio distinto
-    "Action": "DENY"  # Acción distinta
+    "Action": "DENY",  # Accion distinta
+    "Status": "Enabled" 
 }
 print(f"    {is_redundant(ruleI, ruleJ)}")  # False
 print("")
@@ -157,35 +173,40 @@ rule1 = {
     "Source": "ANY",
     "Destination": "10.0.0.0/24",
     "Service": "80",
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Tiene 1 "ANY"
 
 rule2 = {
     "Source": "ANY",
     "Destination": "ANY",
     "Service": "443",
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Tiene 2 "ANY"
 
 rule3 = {
     "Source": "192.168.1.0/24",
     "Destination": "10.0.0.0/24",
     "Service": "ANY",
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Tiene 1 "ANY"
 
 rule4 = {
     "Source": "ANY",
     "Destination": "ANY",
     "Service": "ANY",
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Tiene 3 "ANY"
 
 rule5 = {
     "Source": "192.168.1.0/24",
     "Destination": "10.0.0.0/24",
     "Service": "443",
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # No tiene "ANY"
 
 # Pruebas e impresión de resultados
@@ -204,49 +225,56 @@ rule1 = {
     "Source": ["192.168.1.0/24"],
     "Destination": ["10.0.0.0/24"],
     "Service": ["21"],  # FTP (inseguro)
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Debe devolver True
 
 rule2 = {
     "Source": ["ANY"],
     "Destination": ["10.0.0.0/24"],
     "Service": ["80", "443"],  # HTTP (inseguro) + HTTPS (seguro)
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Debe devolver True
 
 rule3 = {
     "Source": ["192.168.2.0/24"],
     "Destination": ["10.10.10.0/24"],
     "Service": ["443"],  # HTTPS (seguro)
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Debe devolver False
 
 rule4 = {
     "Source": ["192.168.1.0/24"],
     "Destination": ["10.0.0.0/24"],
     "Service": ["137", "139"],  # NetBIOS (inseguro)
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Debe devolver True
 
 rule5 = {
     "Source": ["10.10.10.0/24"],
     "Destination": ["192.168.1.0/24"],
     "Service": ["514"],  # Syslog UDP (inseguro)
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Debe devolver True
 
 rule6 = {
     "Source": ["192.168.5.0/24"],
     "Destination": ["10.20.20.0/24"],
     "Service": ["53", "443"],  # DNS (seguro en UDP, pero AXFR es inseguro en TCP)
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Debe devolver True (porque AXFR en TCP es inseguro)
 
 rule7 = {
     "Source": ["10.0.0.0/8"],
     "Destination": ["192.168.0.0/16"],
     "Service": ["22"],  # SSH (seguro)
-    "Action": "ALLOW"
+    "Action": "ALLOW",
+    "Status": "Enabled"
 }  # Debe devolver False
 
 # Pruebas e impresión de resultados
@@ -264,14 +292,14 @@ print("")
 
 # Caso 1: Última regla bloquea todo el tráfico (debe devolver True)
 rules1 = [
-    {"Source": ["192.168.1.0/24"], "Destination": ["10.0.0.0/24"], "Service": ["80"], "Action": "ALLOW"},
-    {"Source": ["ANY"], "Destination": ["ANY"], "Service": ["ANY"], "Action": "DENY"}  # Bloquea todo
+    {"Source": ["192.168.1.0/24"], "Destination": ["10.0.0.0/24"], "Service": ["80"], "Action": "ALLOW", "Status": "Enabled"},
+    {"Source": ["ANY"], "Destination": ["ANY"], "Service": ["ANY"], "Action": "DENY", "Status": "Enabled"}  # Bloquea todo
 ]
 
 # Caso 2: Última regla bloquea solo un subconjunto del tráfico (debe devolver False)
 rules2 = [
-    {"Source": ["192.168.1.0/24"], "Destination": ["10.0.0.0/24"], "Service": ["80"], "Action": "ALLOW"},
-    {"Source": ["192.168.1.0/24"], "Destination": ["10.0.0.0/24"], "Service": ["ANY"], "Action": "DENY"}  # No bloquea todo
+    {"Source": ["192.168.1.0/24"], "Destination": ["10.0.0.0/24"], "Service": ["80"], "Action": "ALLOW", "Status": "Enabled"},
+    {"Source": ["192.168.1.0/24"], "Destination": ["10.0.0.0/24"], "Service": ["ANY"], "Action": "DENY", "Status": "Enabled"}  # No bloquea todo
 ]
 
 # Caso 3: No hay reglas (debe devolver False)
@@ -279,12 +307,12 @@ rules3 = []
 
 # Caso 4: Última regla permite todo el tráfico (debe devolver False)
 rules4 = [
-    {"Source": ["ANY"], "Destination": ["ANY"], "Service": ["ANY"], "Action": "ALLOW"}
+    {"Source": ["ANY"], "Destination": ["ANY"], "Service": ["ANY"], "Action": "ALLOW", "Status": "Enabled"}
 ]
 
 # Caso 5: Última regla bloquea tráfico pero no todos los destinos (debe devolver False)
 rules5 = [
-    {"Source": ["ANY"], "Destination": ["10.0.0.0/24"], "Service": ["ANY"], "Action": "DENY"}
+    {"Source": ["ANY"], "Destination": ["10.0.0.0/24"], "Service": ["ANY"], "Action": "DENY", "Status": "Enabled"}
 ]
 
 rules6 = rules2 + rules3 + rules4 + rules5 + rules1

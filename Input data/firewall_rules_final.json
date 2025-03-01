@@ -10,7 +10,8 @@
       "Application Control": ["default"],
       "Comments": "",
       "Hit Count": 342,
-      "ID": "14"
+      "ID": "14",
+      "Status": "Enabled"
     },
     {
       "Policy": "SRV-SSL_ADMIN_DUPLICATED (15)",
