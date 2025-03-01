@@ -25,4 +25,4 @@ VULNERABILITY_AUTOMATIZATION/
 │   └── conflict_detection_functions.py     # Python file which contains the functions dedicated to the detect conflict rules
 │   └── file_management_functions.py        # Python file with which contains the functions dedicated to the management of files like getting rules from JSON or creating a DB.
 └── main.py                    # Main script file to start the revision of the firewall security policy.
-```# TFG
+```
