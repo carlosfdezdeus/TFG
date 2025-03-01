@@ -1,0 +1,17 @@
+# Ignorar carpetas llamadas 'old'
+old/
+
+# Ignorar todos los archivos con extensión .
+*.
+
+# Ignorar archivos y carpetas temporales comunes
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.old
+.DS_Store
+.vscode/
+.idea/
+.env
+node_modules/

@@ -1,0 +1,143 @@
+[
+    {
+      "Policy": "SRV-SSL_ADMIN (14)",
+      "Source": [
+        "192.168.1.0/24"
+      ],
+      "Destination": [
+        "10.10.10.0/24"
+      ],
+      "Schedule": [
+        "always"
+      ],
+      "Service": [
+        "ALL"
+      ],
+      "Action": "ACCEPT",
+      "IP Pool": [],
+      "NAT": "Disabled",
+      "Type": "Standard",
+      "Security Profiles": [
+        "certificate-inspection",
+        "default",
+        "high_security"
+      ],
+      "Log": "All",
+      "Bytes": "5.4 MB",
+      "Active Sessions": 12,
+      "Application Control": [
+        "default"
+      ],
+      "AV": [
+        "default"
+      ],
+      "Comments": "",
+      "CPU Bytes": "2.3 MB",
+      "CPU Packets": 10456,
+      "Destination Address": [
+        "10.10.10.0/24"
+      ],
+      "DNS Filter": [],
+      "Email Filter": [],
+      "File Filter": [
+        "ESTRICTO"
+      ],
+      "Groups": [],
+      "Hit Count": 342,
+      "ID": "14",
+      "Inspection Mode": "Flow-based",
+      "IPS": [
+        "high_security"
+      ],
+      "Name": "SRV-SSL_ADMIN",
+      "nTurbo Bytes": "1.2 MB",
+      "nTurbo Packets": 5678,
+      "Packets": 20123,
+      "Protocol Options": [
+        "default"
+      ],
+      "Source Address": [
+        "192.168.1.0/24"
+      ],
+      "SPU Bytes": "980 KB",
+      "SPU Packets": 4321,
+      "SSL Inspection": [
+        "certificate-inspection"
+      ],
+      "Status": "Enabled",
+      "Users": [],
+      "VPN Tunnel": [],
+      "Web Filter": [],
+      "Interface Pair": "LAN,SSL-VPN"
+    },
+    {
+      "Policy": "ANY-TO-INTERNET (15)",
+      "Source": [
+        "ANY"
+      ],
+      "Destination": [
+        "0.0.0.0/0"
+      ],
+      "Schedule": [
+        "always"
+      ],
+      "Service": [
+        "HTTP", "HTTPS", "DNS"
+      ],
+      "Action": "ACCEPT",
+      "IP Pool": [],
+      "NAT": "Enabled",
+      "Type": "Standard",
+      "Security Profiles": [
+        "default"
+      ],
+      "Log": "All",
+      "Bytes": "12.7 MB",
+      "Active Sessions": 34,
+      "Application Control": [
+        "default"
+      ],
+      "AV": [
+        "default"
+      ],
+      "Comments": "Regla muy abierta, podría causar problemas de seguridad.",
+      "CPU Bytes": "5.6 MB",
+      "CPU Packets": 30890,
+      "Destination Address": [
+        "0.0.0.0/0"
+      ],
+      "DNS Filter": [],
+      "Email Filter": [],
+      "File Filter": [
+        "ESTRICTO"
+      ],
+      "Groups": [],
+      "Hit Count": 1294,
+      "ID": "15",
+      "Inspection Mode": "Flow-based",
+      "IPS": [
+        "default"
+      ],
+      "Name": "ANY-TO-INTERNET",
+      "nTurbo Bytes": "3.1 MB",
+      "nTurbo Packets": 15234,
+      "Packets": 50234,
+      "Protocol Options": [
+        "default"
+      ],
+      "Source Address": [
+        "ANY"
+      ],
+      "SPU Bytes": "1.8 MB",
+      "SPU Packets": 7890,
+      "SSL Inspection": [
+        "certificate-inspection"
+      ],
+      "Status": "Enabled",
+      "Users": [],
+      "VPN Tunnel": [],
+      "Web Filter": [],
+      "Interface Pair": "ANY,OUT"
+    }
+  ]
+  
