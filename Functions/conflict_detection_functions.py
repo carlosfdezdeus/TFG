@@ -149,8 +149,8 @@ def is_disabled(rule):
 # ************************************************************************** #
 # ******************** NOT IN USE DETECTION FUNCTION: ********************** #
 # ************************************************************************** #
-def is_not_in_use(rule):
+def is_rule_in_use(rule):
     if "0" in rule["Hit Count"]:
-        return True
-    else:
         return False
+    else:
+        return True
