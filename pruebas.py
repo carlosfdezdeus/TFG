@@ -1,4 +1,4 @@
-from Functions.conflict_detection_functions import is_port_range_subset, is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied
+from Functions.conflict_detection_functions import is_port_range_subset, is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied, is_disabled
 
 # ************************************************************************** #
 # ******************** PRUEBA FUNCIÓN SOLAPE DE PUERTOS ******************** #
@@ -325,3 +325,42 @@ print("     Caso 4:", is_remaining_traffic_denied(rules4))  # False
 print("     Caso 5:", is_remaining_traffic_denied(rules5))  # False
 print("     Caso 6:", is_remaining_traffic_denied(rules6))  # False
 
+# ************************************************************************** #
+# ******************* PRUEBA FUNCIÓN REGLAS DESHABILITADAS ***************** #
+# ************************************************************************** #
+rule_enabled_1 = {
+    "Source": ["ANY"],
+    "Destination": ["10.0.0.0/24"],
+    "Service": ["80", "443"],  # HTTP (inseguro) + HTTPS (seguro)
+    "Action": "ALLOW",
+    "Status": "Enabled"
+}  
+
+rule_enabled_2 = {
+    "Source": ["ANY"],
+    "Destination": ["10.0.0.0/24"],
+    "Service": ["80", "443"],  # HTTP (inseguro) + HTTPS (seguro)
+    "Action": "ALLOW",
+    "Status": "Enabled"
+}  
+
+rule_disabled_1 = {
+    "Source": ["ANY"],
+    "Destination": ["10.0.0.0/24"],
+    "Service": ["80", "443"],  # HTTP (inseguro) + HTTPS (seguro)
+    "Action": "ALLOW",
+    "Status": "Disabled"
+}  
+
+rule_disabled_2 = {
+    "Source": ["ANY"],
+    "Destination": ["10.0.0.0/24"],
+    "Service": ["80", "443"],  # HTTP (inseguro) + HTTPS (seguro)
+    "Action": "ALLOW",
+    "Status": "Disabled"
+}  
+
+print("- PRUEBA FUNCIÓN IS_DISABLED:")
+for i, rule in enumerate([rule_enabled_1, rule_enabled_2, rule_disabled_1, rule_disabled_2], start=1):
+    print(f"    Regla {i}: Está deshabilitada? {is_disabled(rule)}")
+print("")

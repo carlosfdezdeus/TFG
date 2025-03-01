@@ -136,3 +136,21 @@ def is_remaining_traffic_denied(rules: List[Dict]) -> bool:
             return True
         
     return False
+
+# ************************************************************************** #
+# ****************** DISABLED RULES DETECTION FUNCTION: ******************** #
+# ************************************************************************** #
+def is_disabled(rule):
+    if "Disabled" in rule["Status"]:
+        return True
+    else:
+        return False
+
+# ************************************************************************** #
+# ******************** NOT IN USE DETECTION FUNCTION: ********************** #
+# ************************************************************************** #
+def is_not_in_use(rule):
+    if "0" in rule["Hit Count"]:
+        return True
+    else:
+        return False
