@@ -1,6 +1,6 @@
 #from Functions.file_management_functions import load_rules_from_file
 from Functions.config import STRICT_POLICY_INSECURE_PROTOCOLS
-from typing import List, Dict
+from typing import List, Dict, Union
 import ipaddress, re
 
 # ************************************************************************** #
@@ -8,7 +8,7 @@ import ipaddress, re
 # ************************************************************************** #
 def expand_ips(ip_str):    
     ip_str = ip_str.strip()
-    
+
     if ip_str.upper() == "ANY":
         return ipaddress.ip_network("0.0.0.0/0", strict=False)
     
@@ -16,58 +16,61 @@ def expand_ips(ip_str):
         return ipaddress.ip_network(ip_str, strict=False)
     
     if ',' in ip_str:  # Caso de lista de IPs separadas por coma
+        #print({ipaddress.ip_address(ip.strip()) for ip in ip_str.split(",")})
         return {ipaddress.ip_address(ip.strip()) for ip in ip_str.split(",")}
     
     match = re.match(r"(\d+\.\d+\.\d+\.\d+)\s*-\s*(\d+\.\d+\.\d+\.\d+)", ip_str)
     if match:
         start_ip = ipaddress.ip_address(match.group(1))
         end_ip = ipaddress.ip_address(match.group(2))
+        #print({ipaddress.ip_address(ip) for ip in range(int(start_ip), int(end_ip) + 1)})
         return {ipaddress.ip_address(ip) for ip in range(int(start_ip), int(end_ip) + 1)}
     
     return {ipaddress.ip_address(ip_str)}
 
-
-def is_subnet_of(subnet1: str, subnet2: str) -> bool:
-    """Verifica si subnet1 está contenida dentro de subnet2."""
+def is_subnet_of(subnet1: str, subnet2: str) -> Union[bool, str]:
+    """Verifica si subnet1 está completamente o parcialmente contenida dentro de subnet2.
+       Retorna:
+       - True si subnet1 está completamente contenida en subnet2.
+       - 'partial' si subnet1 solo tiene una coincidencia parcial con subnet2.
+       - False si no hay coincidencia.
+    """
     try:
         net1 = expand_ips(subnet1)
         net2 = expand_ips(subnet2)
 
-        # Caso en el que ambos sean subredes
+        # Caso en el que ambos son subredes
         if isinstance(net1, ipaddress.IPv4Network) and isinstance(net2, ipaddress.IPv4Network):
-            return net1.subnet_of(net2) or net1.overlaps(net2)
+            if net1.overlaps(net2) or net2.overlaps(net1):
+                return True if net1 == net2 else "Partial"
 
         # Caso en el que subnet1 es una lista de IPs o rango y subnet2 es una subred
         if isinstance(net1, set) and isinstance(net2, ipaddress.IPv4Network):
-            return all(ip in net2 for ip in net1)
+            if all(ip in net2 for ip in net1):  
+                return True
+            elif any(ip in net2 for ip in net1):  
+                return "Partial"
 
         # Caso en el que subnet2 es un conjunto de IPs y subnet1 es una subred o IP individual
         if isinstance(net2, set) and isinstance(net1, ipaddress.IPv4Network):
-            return any(ip in net1 for ip in net2)
+            if all(ip in net1 for ip in net2):  
+                return True
+            elif any(ip in net1 for ip in net2):  
+                return "Partial"
 
         # Caso en el que ambas son listas de IPs
         if isinstance(net1, set) and isinstance(net2, set):
-            return bool(net1 & net2)  # Retorna True si hay intersección
+            intersection = net1 & net2
+            if intersection == net1:  # Todas las IPs de subnet1 están en subnet2
+                return True
+            elif intersection:  # Hay coincidencia parcial
+                return "Partial"
 
         return False
     except ValueError:
         return False
 
-# def is_subnet_of(subnet1: str, subnet2: str) -> bool:
-#     try:
-#         if "ANY" in subnet1:
-#             subnet1 = "0.0.0.0/0"
-#         if "ANY" in subnet2:
-#             subnet2 = "0.0.0.0/0"
-# #        print(f"Subred 1: {subnet2}")
-# #        print(f"Subred 2: {subnet1}")   
 
-#         net1 = ipaddress.IPv4Network(subnet1, strict=False)
-#         net2 = ipaddress.IPv4Network(subnet2, strict=False)
-#         return net1.overlaps(net2)
-#     except ValueError:
-#         return False
-    
 def is_port_range_subset(port1, port2):
     """Verifica si el puerto2 está dentro del rango de puerto1."""
     def expand_ports(port):
@@ -89,8 +92,14 @@ def is_port_range_subset(port1, port2):
 
     if ports1 == "ANY":
         return True
+    if ports1 == "ANY":
+        return True  # "ANY" incluye todos los puertos
+
     if isinstance(ports1, set) and isinstance(ports2, set):
-        return not ports1.isdisjoint(ports2)  # Devuelve True si hay intersección
+        if ports2.issubset(ports1):  # Todos los puertos de ports2 están en ports1
+            return True
+        elif ports1 & ports2:  # Hay intersección pero ports2 no está completamente en ports1
+            return "Partial"
     return False
 # ************************************************************************** #
 # ****************** REDUNDANT RULE DETECTION FUNCTIONS: ******************* #
@@ -207,3 +216,30 @@ def is_rule_in_use(rule):
 # ************************************************************************** #
 # ******************* SHADOW RULE DETECTION FUNCTION: ********************** #
 # ************************************************************************** #
+def detect_shadowing(rule1: Dict, rule2: Dict) -> Union[str, None]:
+    """Detecta si rule2 hace shadowing (total o parcial) sobre rule1.
+       Retorna:
+       - 'fully' si rule2 está completamente cubierta y es contradictoria.
+       - 'partial' si rule2 solo se solapa parcialmente con rule1.
+       - None si no hay shadowing.
+    """
+    if "Enabled" in rule1["Status"] and "Enabled" in rule2["Status"]:
+        source_match = all(any(is_subnet_of(src2, src1) for src1 in rule1["Source"]) for src2 in rule2["Source"])
+        print(source_match)
+        destination_match = all(any(is_subnet_of(dst2, dst1) for dst1 in rule1["Destination"]) for dst2 in rule2["Destination"])
+        print(destination_match)
+        service_match = all(any(is_port_range_subset(srv2, srv1) for srv1 in rule1["Service"]) for srv2 in rule2["Service"])  
+        action_conflict = rule1["Action"] != rule2["Action"]
+
+        if source_match and destination_match and service_match:
+            return "fully" if action_conflict else None  # Full shadowing si hay conflicto de acción
+
+        # Verificamos shadowing parcial si hay intersecciones en alguna de las dimensiones
+        source_partial = any(any(is_subnet_of(src2, src1) == "partial" for src1 in rule1["Source"]) for src2 in rule2["Source"])
+        destination_partial = any(any(is_subnet_of(dst2, dst1) == "partial" for dst1 in rule1["Destination"]) for dst2 in rule2["Destination"])
+        service_partial = any(any(is_port_range_subset(srv2, srv1) == "partial" for srv1 in rule1["Service"]) for srv2 in rule2["Service"])
+
+        if source_partial or destination_partial or service_partial:
+            return "partial"
+
+    return None

@@ -1,16 +1,34 @@
-from Functions.conflict_detection_functions import is_port_range_subset, is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied, is_disabled, is_rule_in_use
+from Functions.conflict_detection_functions import is_port_range_subset, is_subnet_of,is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied, is_disabled, is_rule_in_use, detect_shadowing
 
 # ************************************************************************** #
 # ******************** PRUEBA FUNCIÓN SOLAPE DE PUERTOS ******************** #
 # ************************************************************************** #
 print("- PRUEBA FUNCIÓN SOLAPE DE PUERTOS:")
-print(f"    ¿Hay solape entre 80-90 y 85? - {is_port_range_subset('80-90', '85')}")  # True
+print(f"    ¿Hay solape entre 80-90 y 85,95? - {is_port_range_subset('80-90', '85,95')}")  # True
 print(f"    ¿Hay solape entre 80,90 y 75? - {is_port_range_subset('80,90', '75')}")       # False
 print(f"    ¿Hay solape entre 80,75 y 75? - {is_port_range_subset('80,75', '75')}")       # True
 print(f"    ¿Hay solape entre ANY y 443? - {is_port_range_subset('ANY', '443')}")       # True
 print(f"    ¿Hay solape entre ANY y ANY? - {is_port_range_subset('ANY', 'ANY')}")       # True
 print(f"    ¿Hay solape entre ANY y 80? - {is_port_range_subset('ANY', '80')}")       # True
 print("")
+
+
+
+# ************************************************************************** #
+# ******************** PRUEBA FUNCIÓN SOLAPE DE SUBREDES ******************* #
+# ************************************************************************** #
+print("- PRUEBA FUNCIÓN SOLAPE DE SUBREDES:")
+print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.0/23? - {is_subnet_of('10.0.0.0/24', '10.0.0.0/23')}")  # partial
+print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.1.0/24? - {is_subnet_of('10.0.0.0/24', '10.0.1.0/24')}")  # False
+print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.0/24? - {is_subnet_of('10.0.0.0/24', '10.0.0.0/24')}")  # True
+print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.128/25? - {is_subnet_of('10.0.0.0/24', '10.0.0.128/25')}")  # partial
+print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.64/26? - {is_subnet_of('10.0.0.0/24', '10.0.0.64/26')}")  # partial
+print(f"    ¿Hay solape entre 10.0.0.0/25 y 10.0.0.0/24? - {is_subnet_of('10.0.0.0/25', '10.0.0.0/24')}")  # partial
+print(f"    ¿Hay solape entre 10.0.0.50 y 10.0.0.0/24? - {is_subnet_of('10.0.0.50', '10.0.0.0/24')}")  # True
+print(f"    ¿Hay solape entre 10.0.0.50,10.0.0.100 y 10.0.0.0/25? - {is_subnet_of('10.0.0.50,10.0.0.100', '10.0.0.0/25')}")  # partial
+print(f"    ¿Hay solape entre 10.0.0.50-10.0.0.100 y 10.0.0.1,10.0.0.100? - {is_subnet_of('10.0.0.50-10.0.0.100', '10.0.0.1,10.0.0.100')}")  # partial
+print("")
+
 
 
 
@@ -83,7 +101,7 @@ redundant_rule7 = {
 }  
 
 redundant_rule8 = {
-    "Source": ["192.168.100.1, 192.168.100.10"],
+    "Source": ["192.168.100.1, 192.168.10.10"],
     "Destination": ["10.10.10.50"],
     "Service": ["80"],
     "Action": "ALLOW",
@@ -451,12 +469,86 @@ print("")
 
 
 # ************************************************************************** #
-# ********************** PRUEBA FUNCIÓN IS_SHADOWED ************************ #
+# ********************* PRUEBA FUNCIÓN REGLAS SHADOWED ********************* #
 # ************************************************************************** #
-shadowed_rules_test = [
-    {"ID": 3, "Source": ["10.0.10.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80", "8080", "443"], "Action": "ALLOW", "Status": "Enabled"},
-    {"ID": 4, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080", "8081"], "Action": "DENY", "Status": "Enabled"},
-    {"ID": 5, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/28"], "Service": ["80"], "Action": "DENY", "Status": "Enabled"}
-]
 
-print("- PRUEBA FUNCIÓN SHADOWED RULES:")
+# Reglas con shadowing parcial y total
+
+shadow_rule1 = {
+    "Source": ["10.0.0.0/24"],
+    "Destination": ["10.0.1.0/24"],
+    "Service": ["80, 8080, 443"],
+    "Action": "ALLOW",
+    "Hit Count": "500",
+    "Status": "Enabled"
+}
+
+shadow_rule2 = {
+    "Source": ["10.0.0.0/24"],
+    "Destination": ["10.0.1.0/24"],
+    "Service": ["8080, 8081"],
+    "Action": "DENY",
+    "Hit Count": "500",
+    "Status": "Enabled"
+}  # Parcialmente shadowed (8080 sigue permitido, pero 8081 es denegado)
+
+shadow_rule3 = {
+    "Source": ["10.0.0.0/24"],
+    "Destination": ["10.0.1.0/24"],
+    "Service": ["80"],
+    "Action": "ALLOW",
+    "Hit Count": "500",
+    "Status": "Enabled"
+}
+
+shadow_rule4 = {
+    "Source": ["10.0.0.0/16"],
+    "Destination": ["10.0.1.0/24"],
+    "Service": ["80"],
+    "Action": "DENY",
+    "Hit Count": "500",
+    "Status": "Enabled"
+}  # Parcialmente shadowed (10.0.0.0/24 sigue permitido, pero el resto del /16 es denegado)
+
+shadow_rule5 = {
+    "Source": ["10.0.0.0/24"],
+    "Destination": ["10.0.1.0/24"],
+    "Service": ["80"],
+    "Action": "ALLOW",
+    "Hit Count": "500",
+    "Status": "Enabled"
+}
+
+shadow_rule6 = {
+    "Source": ["10.0.0.0/24"],
+    "Destination": ["10.0.1.0/24"],
+    "Service": ["80"],
+    "Action": "DENY",
+    "Hit Count": "500",
+    "Status": "Enabled"
+}  # Fully shadowed (conflicto total en source, destination, service y acción)
+
+shadow_rule7 = {
+    "Source": ["10.0.0.0/24"],
+    "Destination": ["10.0.1.0/24"],
+    "Service": ["80, 8080"],
+    "Action": "ALLOW",
+    "Hit Count": "500",
+    "Status": "Enabled"
+}
+
+shadow_rule8 = {
+    "Source": ["10.0.0.0/24"],
+    "Destination": ["10.0.1.0/24"],
+    "Service": ["8080"],
+    "Action": "DENY",
+    "Hit Count": "500",
+    "Status": "Enabled"
+}  # Fully shadowed (8080 está dentro del rango y se contradice con la regla previa)
+
+# Ejecutamos pruebas
+print("- PRUEBA FUNCIÓN REGLAS SHADOWED:")
+print(f"    {detect_shadowing(shadow_rule1, shadow_rule2)}")  # "partial"
+print(f"    {detect_shadowing(shadow_rule3, shadow_rule4)}")  # "partial"
+print(f"    {detect_shadowing(shadow_rule5, shadow_rule6)}")  # "fully"
+print(f"    {detect_shadowing(shadow_rule7, shadow_rule8)}")  # "fully"
