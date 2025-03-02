@@ -5,7 +5,8 @@ from Functions.conflict_detection_functions import is_port_range_subset, is_redu
 # ************************************************************************** #
 print("- PRUEBA FUNCIÓN SOLAPE DE PUERTOS:")
 print(f"    ¿Hay solape entre 80-90 y 85? - {is_port_range_subset('80-90', '85')}")  # True
-print(f"    ¿Hay solape entre 80-90 y 75? - {is_port_range_subset('80-90', '75')}")       # False
+print(f"    ¿Hay solape entre 80,90 y 75? - {is_port_range_subset('80,90', '75')}")       # False
+print(f"    ¿Hay solape entre 80,75 y 75? - {is_port_range_subset('80,75', '75')}")       # True
 print(f"    ¿Hay solape entre ANY y 443? - {is_port_range_subset('ANY', '443')}")       # True
 print(f"    ¿Hay solape entre ANY y ANY? - {is_port_range_subset('ANY', 'ANY')}")       # True
 print(f"    ¿Hay solape entre ANY y 80? - {is_port_range_subset('ANY', '80')}")       # True
@@ -72,11 +73,33 @@ redundant_rule6 = {
     "Status": "Enabled"
 }  # Redundante con redundant_rule5 (ANY lo abarca todo)
 
+redundant_rule7 = {
+    "Source": ["192.168.100.1 - 192.168.100.10"],
+    "Destination": ["10.10.10.50"],
+    "Service": ["80"],
+    "Action": "ALLOW",
+    "Hit Count": "341",
+    "Status": "Enabled"
+}  
+
+redundant_rule8 = {
+    "Source": ["192.168.100.1, 192.168.100.10"],
+    "Destination": ["10.10.10.50"],
+    "Service": ["80"],
+    "Action": "ALLOW",
+    "Hit Count": "341",
+    "Status": "Enabled"
+} 
+
 # Ejecutamos pruebas
 print("- PRUEBA FUNCIÓN REGLAS REDUNDANTES:")
 print(f"    {is_redundant(redundant_rule1, redundant_rule2)}")  # True
 print(f"    {is_redundant(redundant_rule3, redundant_rule4)}")  # True
 print(f"    {is_redundant(redundant_rule5, redundant_rule6)}")  # True
+print(f"    {is_redundant(redundant_rule6, redundant_rule7)}")  # True
+print(f"    {is_redundant(redundant_rule7, redundant_rule8)}")  # True
+
+
 
 # Diferente origen
 ruleA = {
@@ -424,3 +447,16 @@ print("- PRUEBA FUNCIÓN IS_NOT_IN_USE:")
 for i, rule in enumerate([rule_with_hits, rule_without_hits], start=1):
     print(f"    Regla {i}: Está en uso? {is_rule_in_use(rule)}")
 print("")
+
+
+
+# ************************************************************************** #
+# ********************** PRUEBA FUNCIÓN IS_SHADOWED ************************ #
+# ************************************************************************** #
+shadowed_rules_test = [
+    {"ID": 3, "Source": ["10.0.10.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80", "8080", "443"], "Action": "ALLOW", "Status": "Enabled"},
+    {"ID": 4, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080", "8081"], "Action": "DENY", "Status": "Enabled"},
+    {"ID": 5, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/28"], "Service": ["80"], "Action": "DENY", "Status": "Enabled"}
+]
+
+print("- PRUEBA FUNCIÓN SHADOWED RULES:")

@@ -1,23 +1,72 @@
 #from Functions.file_management_functions import load_rules_from_file
 from Functions.config import STRICT_POLICY_INSECURE_PROTOCOLS
 from typing import List, Dict
-import ipaddress
+import ipaddress, re
 
 # ************************************************************************** #
 # ******************* GENERAL RULE DETECTION FUNCTIONS: ******************** #
 # ************************************************************************** #
+def expand_ips(ip_str):    
+    ip_str = ip_str.strip()
+    
+    if ip_str.upper() == "ANY":
+        return ipaddress.ip_network("0.0.0.0/0", strict=False)
+    
+    if '/' in ip_str:
+        return ipaddress.ip_network(ip_str, strict=False)
+    
+    if ',' in ip_str:  # Caso de lista de IPs separadas por coma
+        return {ipaddress.ip_address(ip.strip()) for ip in ip_str.split(",")}
+    
+    match = re.match(r"(\d+\.\d+\.\d+\.\d+)\s*-\s*(\d+\.\d+\.\d+\.\d+)", ip_str)
+    if match:
+        start_ip = ipaddress.ip_address(match.group(1))
+        end_ip = ipaddress.ip_address(match.group(2))
+        return {ipaddress.ip_address(ip) for ip in range(int(start_ip), int(end_ip) + 1)}
+    
+    return {ipaddress.ip_address(ip_str)}
+
 
 def is_subnet_of(subnet1: str, subnet2: str) -> bool:
+    """Verifica si subnet1 está contenida dentro de subnet2."""
     try:
-        if "ANY" in subnet1:
-            subnet1 = "0.0.0.0/0"
-        if "ANY" in subnet2:
-            subnet2 = "0.0.0.0/0"
-        net1 = ipaddress.IPv4Network(subnet1, strict=False)
-        net2 = ipaddress.IPv4Network(subnet2, strict=False)
-        return net1.overlaps(net2)
+        net1 = expand_ips(subnet1)
+        net2 = expand_ips(subnet2)
+
+        # Caso en el que ambos sean subredes
+        if isinstance(net1, ipaddress.IPv4Network) and isinstance(net2, ipaddress.IPv4Network):
+            return net1.subnet_of(net2) or net1.overlaps(net2)
+
+        # Caso en el que subnet1 es una lista de IPs o rango y subnet2 es una subred
+        if isinstance(net1, set) and isinstance(net2, ipaddress.IPv4Network):
+            return all(ip in net2 for ip in net1)
+
+        # Caso en el que subnet2 es un conjunto de IPs y subnet1 es una subred o IP individual
+        if isinstance(net2, set) and isinstance(net1, ipaddress.IPv4Network):
+            return any(ip in net1 for ip in net2)
+
+        # Caso en el que ambas son listas de IPs
+        if isinstance(net1, set) and isinstance(net2, set):
+            return bool(net1 & net2)  # Retorna True si hay intersección
+
+        return False
     except ValueError:
         return False
+
+# def is_subnet_of(subnet1: str, subnet2: str) -> bool:
+#     try:
+#         if "ANY" in subnet1:
+#             subnet1 = "0.0.0.0/0"
+#         if "ANY" in subnet2:
+#             subnet2 = "0.0.0.0/0"
+# #        print(f"Subred 1: {subnet2}")
+# #        print(f"Subred 2: {subnet1}")   
+
+#         net1 = ipaddress.IPv4Network(subnet1, strict=False)
+#         net2 = ipaddress.IPv4Network(subnet2, strict=False)
+#         return net1.overlaps(net2)
+#     except ValueError:
+#         return False
     
 def is_port_range_subset(port1, port2):
     """Verifica si el puerto2 está dentro del rango de puerto1."""
@@ -154,3 +203,7 @@ def is_rule_in_use(rule):
         return False
     else:
         return True
+    
+# ************************************************************************** #
+# ******************* SHADOW RULE DETECTION FUNCTION: ********************** #
+# ************************************************************************** #
