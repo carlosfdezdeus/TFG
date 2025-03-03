@@ -216,30 +216,38 @@ def is_rule_in_use(rule):
 # ************************************************************************** #
 # ******************* SHADOW RULE DETECTION FUNCTION: ********************** #
 # ************************************************************************** #
-def detect_shadowing(rule1: Dict, rule2: Dict) -> Union[str, None]:
-    """Detecta si rule2 hace shadowing (total o parcial) sobre rule1.
-       Retorna:
-       - 'fully' si rule2 está completamente cubierta y es contradictoria.
-       - 'partial' si rule2 solo se solapa parcialmente con rule1.
-       - None si no hay shadowing.
+def is_shadowed(rule_lower: Dict, rule_upper: Dict) -> Union[str, bool]:
     """
-    if "Enabled" in rule1["Status"] and "Enabled" in rule2["Status"]:
-        source_match = all(any(is_subnet_of(src2, src1) for src1 in rule1["Source"]) for src2 in rule2["Source"])
-        print(source_match)
-        destination_match = all(any(is_subnet_of(dst2, dst1) for dst1 in rule1["Destination"]) for dst2 in rule2["Destination"])
-        print(destination_match)
-        service_match = all(any(is_port_range_subset(srv2, srv1) for srv1 in rule1["Service"]) for srv2 in rule2["Service"])  
-        action_conflict = rule1["Action"] != rule2["Action"]
+    Determina si la regla `rule_lower` está opacada por la regla `rule_upper`.
+    """
+    action_lower = rule_lower['Action']
+    action_upper = rule_upper['Action']
+    
+    ip_src_relation = is_subnet_of(rule_lower['Source'][0], rule_upper['Source'][0])
+    ip_dst_relation = is_subnet_of(rule_lower['Destination'][0], rule_upper['Destination'][0])
+    port_relation = is_port_range_subset(rule_lower['Service'][0], rule_upper['Service'][0])
+    
+    if ip_src_relation and ip_dst_relation and port_relation:
+        if action_upper == "ALLOW" and action_lower == "DENY":
+            return "Partial" if any(x == "Partial" for x in [ip_src_relation, ip_dst_relation, port_relation]) else "Fully"
+        elif action_upper == action_lower:
+            return "Fully"
+    
+    return False
 
-        if source_match and destination_match and service_match:
-            return "fully" if action_conflict else None  # Full shadowing si hay conflicto de acción
-
-        # Verificamos shadowing parcial si hay intersecciones en alguna de las dimensiones
-        source_partial = any(any(is_subnet_of(src2, src1) == "partial" for src1 in rule1["Source"]) for src2 in rule2["Source"])
-        destination_partial = any(any(is_subnet_of(dst2, dst1) == "partial" for dst1 in rule1["Destination"]) for dst2 in rule2["Destination"])
-        service_partial = any(any(is_port_range_subset(srv2, srv1) == "partial" for srv1 in rule1["Service"]) for srv2 in rule2["Service"])
-
-        if source_partial or destination_partial or service_partial:
-            return "partial"
-
-    return None
+def detect_shadow_rules(rules: List[Dict]) -> List[Dict]:
+    """
+    Detecta reglas shadowing, asegurando que una regla superior opaca a una inferior.
+    """
+    shadowed_rules = []
+    for i, rule_upper in enumerate(rules):
+        for j, rule_lower in enumerate(rules):
+            if i < j:  # Se asegura de comparar solo reglas superiores contra inferiores
+                shadow_status = is_shadowed(rule_lower, rule_upper)
+                if shadow_status:
+                    shadowed_rules.append({
+                        "Rule1": rule_upper,
+                        "Rule2": rule_lower,
+                        "Shadow Type": shadow_status
+                    })
+    return shadowed_rules

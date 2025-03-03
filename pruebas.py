@@ -1,4 +1,4 @@
-from Functions.conflict_detection_functions import is_port_range_subset, is_subnet_of,is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied, is_disabled, is_rule_in_use, detect_shadowing
+from Functions.conflict_detection_functions import is_port_range_subset, is_subnet_of,is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied, is_disabled, is_rule_in_use, detect_shadow_rules
 
 # ************************************************************************** #
 # ******************** PRUEBA FUNCIÓN SOLAPE DE PUERTOS ******************** #
@@ -471,84 +471,28 @@ print("")
 # ************************************************************************** #
 # ********************* PRUEBA FUNCIÓN REGLAS SHADOWED ********************* #
 # ************************************************************************** #
-
-# Reglas con shadowing parcial y total
-
-shadow_rule1 = {
-    "Source": ["10.0.0.0/24"],
-    "Destination": ["10.0.1.0/24"],
-    "Service": ["80, 8080, 443"],
-    "Action": "ALLOW",
-    "Hit Count": "500",
-    "Status": "Enabled"
-}
-
-shadow_rule2 = {
-    "Source": ["10.0.0.0/24"],
-    "Destination": ["10.0.1.0/24"],
-    "Service": ["8080, 8081"],
-    "Action": "DENY",
-    "Hit Count": "500",
-    "Status": "Enabled"
-}  # Parcialmente shadowed (8080 sigue permitido, pero 8081 es denegado)
-
-shadow_rule3 = {
-    "Source": ["10.0.0.0/24"],
-    "Destination": ["10.0.1.0/24"],
-    "Service": ["80"],
-    "Action": "ALLOW",
-    "Hit Count": "500",
-    "Status": "Enabled"
-}
-
-shadow_rule4 = {
-    "Source": ["10.0.0.0/16"],
-    "Destination": ["10.0.1.0/24"],
-    "Service": ["80"],
-    "Action": "DENY",
-    "Hit Count": "500",
-    "Status": "Enabled"
-}  # Parcialmente shadowed (10.0.0.0/24 sigue permitido, pero el resto del /16 es denegado)
-
-shadow_rule5 = {
-    "Source": ["10.0.0.0/24"],
-    "Destination": ["10.0.1.0/24"],
-    "Service": ["80"],
-    "Action": "ALLOW",
-    "Hit Count": "500",
-    "Status": "Enabled"
-}
-
-shadow_rule6 = {
-    "Source": ["10.0.0.0/24"],
-    "Destination": ["10.0.1.0/24"],
-    "Service": ["80"],
-    "Action": "DENY",
-    "Hit Count": "500",
-    "Status": "Enabled"
-}  # Fully shadowed (conflicto total en source, destination, service y acción)
-
-shadow_rule7 = {
-    "Source": ["10.0.0.0/24"],
-    "Destination": ["10.0.1.0/24"],
-    "Service": ["80, 8080"],
-    "Action": "ALLOW",
-    "Hit Count": "500",
-    "Status": "Enabled"
-}
-
-shadow_rule8 = {
-    "Source": ["10.0.0.0/24"],
-    "Destination": ["10.0.1.0/24"],
-    "Service": ["8080"],
-    "Action": "DENY",
-    "Hit Count": "500",
-    "Status": "Enabled"
-}  # Fully shadowed (8080 está dentro del rango y se contradice con la regla previa)
+# **************************************************************************  #
+# ******************* PRUEBA FUNCIÓN REGLAS SHADOW **********************  #
+# **************************************************************************  #
+test_rules = [
+    {"ID": 3, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80, 8080, 443"], "Action": "ALLOW"},
+    {"ID": 4, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080, 8081"], "Action": "DENY"},
+    {"ID": 5, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "ALLOW"},
+    {"ID": 6, "Source": ["10.0.0.0/16"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "DENY"},
+    {"ID": 7, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "ALLOW"},
+    {"ID": 8, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/16"], "Service": ["80"], "Action": "DENY"},
+    {"ID": 9, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "ALLOW"},
+    {"ID": 10, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["3128 - 3200"], "Action": "DENY"},
+    {"ID": 11, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "ALLOW"},
+    {"ID": 12, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "DENY"},
+    {"ID": 13, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80, 8080"], "Action": "ALLOW"},
+    {"ID": 14, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080"], "Action": "DENY"}
+]
 
 # Ejecutamos pruebas
-print("- PRUEBA FUNCIÓN REGLAS SHADOWED:")
-print(f"    {detect_shadowing(shadow_rule1, shadow_rule2)}")  # "partial"
-print(f"    {detect_shadowing(shadow_rule3, shadow_rule4)}")  # "partial"
-print(f"    {detect_shadowing(shadow_rule5, shadow_rule6)}")  # "fully"
-print(f"    {detect_shadowing(shadow_rule7, shadow_rule8)}")  # "fully"
+print("- PRUEBA FUNCIÓN REGLAS SHADOW:")
+for result in detect_shadow_rules(test_rules):
+    print(f"  Regla {result['Rule1']['ID']}: {result['Rule1']}")
+    print(f"  Regla {result['Rule2']['ID']}: {result['Rule2']}")
+    print(f"  Shadow Type: {result['Shadow Type']}")
+    print("  --------------------------------")
