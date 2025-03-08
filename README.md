@@ -53,5 +53,5 @@ functions.saveFWRules("reglasFW.json")
 ```
 
 #### **Flow Diagrams**:
-<img src="Flow diagrams/Flow Diagram - is_redundant().png" alt="FUNCIÓN: is_redundant()" width="600">
+<img src="Flow diagrams/Flow Diagram - is_redundant().png" alt="FUNCIÓN: is_redundant()" width="200">
 

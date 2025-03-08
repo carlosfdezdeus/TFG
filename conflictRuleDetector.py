@@ -73,4 +73,4 @@ if __name__ == '__main__':
                 insert_conflict_rule(rule1, None, "Remaining traffic not denied")
 
         print("\n")
-    #diplay_conflictive_rules()
+    diplay_conflictive_rules()
