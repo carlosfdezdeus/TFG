@@ -1,86 +1,141 @@
-from config import DB_FW_CONFLICTS, DB_FW_RULES
-import json, sqlite3
+from Functions.config import DB_FW_CONFLICTS, DATABASES_DIR, JSON_FILE_PATH, CRITICALITY
+import json, sqlite3, os
+import pandas as pd
 from typing import List, Dict
 
 
-def load_rules_from_file(filename: str) -> List[Dict]:
-    """Carga todas las reglas desde un archivo JSON en una lista de diccionarios."""
+def load_rules_from_file(filename=JSON_FILE_PATH) -> List[Dict]:
+    """Carga todas las reglas desde un archivo JSON en una lista de diccionarios, formateadas correctamente."""
     with open(filename, 'r') as file:
         json_data = json.load(file)
     
     rules = []
-    for index, entry in enumerate(json_data, start=1):
+    for entry in json_data:
         rule = {
             "ID": entry["ID"],  
             "Policy": entry["Policy"],
-            "Source": entry["Source"],
-            "Destination": entry["Destination"],
+            "Source": entry["Source"] if isinstance(entry["Source"], list) else [entry["Source"]],
+            "Destination": entry["Destination"] if isinstance(entry["Destination"], list) else [entry["Destination"]],
             "Schedule": entry["Schedule"],
-            "Service": entry["Service"],
+            "Service": (
+                [s.strip() for s in entry["Service"].split(",")]  # Convertir a lista si es un string separado por comas
+                if isinstance(entry["Service"], str) else entry["Service"]
+            ),
             "Action": entry["Action"],
             "Log": entry["Log"],
-            "Application Control": entry["Application Control"],
+            "Application Control": entry["Application Control"] if isinstance(entry["Application Control"], list) else [entry["Application Control"]],
             "Comments": entry["Comments"],
-            "Hit Count": entry["Hit Count"]
+            "Hit Count": entry["Hit Count"],
+            "Status": entry["Status"]
         }
         rules.append(rule)
-    
+
     return rules
 
 def create_conflict_database():
-    conn = sqlite3.connect(DB_FW_RULES)
+    # Crear la carpeta de la base de datos si no existe
+    if not os.path.exists(DATABASES_DIR):
+        os.makedirs(DATABASES_DIR, exist_ok=True)
+                    
+    conn = sqlite3.connect(DB_FW_CONFLICTS)
     cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS firewall_conflicts (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        id_rule_1 TEXT,
-                        id_rule_2 TEXT,
-                        source_rule_1 TEXT,
-                        source_rule_2 TEXT,
-                        destination_rule_1 TEXT,
-                        destination_rule_2 TEXT,
-                        service TEXT,
-                        action_rule_1 TEXT,
-                        action_rule_2 TEXT,
-                        conflict_type TEXT,      -- Tipo de conflicto (redundante, shadowed, any, etc.)
-                        permissiveness TEXT,     -- any, ranges
-                        shadowed TEXT,           -- fully, partially
-                        violations TEXT,         -- Políticas de seguridad violadas
-                        hit_count INTEGER,       -- Número de veces que la regla ha sido utilizada
-                        detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha de detección del conflicto
-                        first_used TIMESTAMP,    -- Primera vez que se usó la regla
-                        last_used TIMESTAMP      -- Última vez que se usó la regla)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS firewall_conflict_rules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_rule_1 INTEGER,
+            id_rule_2 INTEGER,
+            source_rule_1 TEXT,
+            source_rule_2 TEXT,
+            destination_rule_1 TEXT,
+            destination_rule_2 TEXT,
+            service_rule_1 TEXT,
+            service_rule_2 TEXT,
+            action_rule_1 TEXT,
+            action_rule_2 TEXT,
+            hit_count_rule_1 INTEGER,
+            hit_count_rule_2 INTEGER,
+            status_rule_1 TEXT,
+            status_rule_2 TEXT,
+            conflict_type TEXT,
+            criticality TEXT
+        )
     ''')
     conn.commit()
     conn.close()
 
-def insert_firewall_rule(rule):
-    conn = sqlite3.connect(DB_FW_RULES)
+def insert_conflict_rule(rule1, rule2, conflict_type):
+    """ Inserta un conflicto en la base de datos, manejando NULL si rule2 es None. """
+
+    # Determinar la criticalidad basada en el tipo de conflicto
+    criticality = CRITICALITY.get(conflict_type, "Unknown")
+
+    # Función auxiliar para obtener valores de manera segura
+    def safe_get(rule, key):
+        return json.dumps(rule[key]) if rule and key in rule else None
+
+    conn = sqlite3.connect(DB_FW_CONFLICTS)
     cursor = conn.cursor()
+    
     try:
         cursor.execute('''
-            INSERT INTO firewall_rules (
-                policy, source, destination, schedule, service, action, ip_pool, nat, type,
-                security_profiles, log, bytes, active_sessions, application_control, av, comments,
-                cpu_bytes, cpu_packets, destination_address, dns_filter, email_filter, file_filter,
-                groups, hit_count, inspection_mode, ips, name, nturbo_bytes, nturbo_packets,
-                packets, protocol_options, source_address, spu_bytes, spu_packets,
-                ssl_inspection, status, users, vpn_tunnel, web_filter, interface_pair
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO firewall_conflict_rules (
+                id_rule_1, id_rule_2,
+                source_rule_1, source_rule_2,
+                destination_rule_1, destination_rule_2,
+                service_rule_1, service_rule_2,
+                action_rule_1, action_rule_2,
+                hit_count_rule_1, hit_count_rule_2,
+                status_rule_1, status_rule_2,
+                conflict_type, criticality
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            rule["Policy"], json.dumps(rule["Source"]), json.dumps(rule["Destination"]), json.dumps(rule["Schedule"]),
-            json.dumps(rule["Service"]), rule["Action"], json.dumps(rule["IP Pool"]), rule["NAT"], rule["Type"],
-            json.dumps(rule["Security Profiles"]), rule["Log"], rule["Bytes"], rule["Active Sessions"],
-            json.dumps(rule["Application Control"]), json.dumps(rule["AV"]), rule["Comments"],
-            rule["CPU Bytes"], rule["CPU Packets"], json.dumps(rule["Destination Address"]),
-            json.dumps(rule["DNS Filter"]), json.dumps(rule["Email Filter"]), json.dumps(rule["File Filter"]),
-            json.dumps(rule["Groups"]), rule["Hit Count"], rule["Inspection Mode"], json.dumps(rule["IPS"]),
-            rule["Name"], rule["nTurbo Bytes"], rule["nTurbo Packets"], rule["Packets"],
-            json.dumps(rule["Protocol Options"]), json.dumps(rule["Source Address"]), rule["SPU Bytes"],
-            rule["SPU Packets"], json.dumps(rule["SSL Inspection"]), rule["Status"], json.dumps(rule["Users"]),
-            json.dumps(rule["VPN Tunnel"]), json.dumps(rule["Web Filter"]), rule["Interface Pair"]
+            rule1["ID"], 
+            rule2["ID"] if rule2 else None,  # Si rule2 es None, insertar NULL
+
+            safe_get(rule1, "Source"), 
+            safe_get(rule2, "Source") if rule2 else None,
+
+            safe_get(rule1, "Destination"), 
+            safe_get(rule2, "Destination") if rule2 else None,
+
+            safe_get(rule1, "Service"), 
+            safe_get(rule2, "Service") if rule2 else None,
+
+            rule1["Action"], 
+            rule2["Action"] if rule2 else None,
+
+            int(rule1.get("Hit Count", 0)), 
+            int(rule2.get("Hit Count", 0)) if rule2 else None,
+
+            safe_get(rule1, "Status"), 
+            safe_get(rule2, "Status") if rule2 else None,
+
+            conflict_type, criticality
         ))
+        
         conn.commit()
-    except sqlite3.IntegrityError:
-        print(f"Regla con policy '{rule['Policy']}' ya existe en la base de datos.")
+        #print("Conflicto insertado correctamente.")
+
+    except sqlite3.IntegrityError as e:
+        print(f"Error al insertar el conflicto: {e}")
+
     finally:
         conn.close()
+
+def get_conflictive_rules_from_db():
+    conn = sqlite3.connect(DB_FW_CONFLICTS)
+    rules_dataframe = pd.read_sql_query("SELECT * FROM firewall_conflict_rules", conn)
+    conn.close()
+
+    return rules_dataframe
+
+
+def diplay_conflictive_rules():
+    conn = sqlite3.connect(DB_FW_CONFLICTS)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM firewall_conflict_rules")
+    rules = cursor.fetchall()
+    conn.close()
+    
+    for rule in rules:
+        print(rule)    

@@ -1,7 +1,7 @@
 #from Functions.file_management_functions import load_rules_from_file
-from Functions.config import STRICT_POLICY_INSECURE_PROTOCOLS
+from Functions.config import STRICT_POLICY_INSECURE_PROTOCOLS, CRITICALITY
 from typing import List, Dict, Union
-import ipaddress, re
+import ipaddress, re, logging
 
 # ************************************************************************** #
 # ******************* GENERAL RULE DETECTION FUNCTIONS: ******************** #
@@ -75,6 +75,8 @@ def is_port_range_subset(port1, port2):
     """Verifica si el puerto2 está dentro del rango de puerto1."""
     def expand_ports(port):
         """Convierte una cadena de puertos en un conjunto de enteros."""
+        if port == "ALL":
+            port = "ANY"
         if port == "ANY":
             return "ANY"
         ports = set()
@@ -106,7 +108,9 @@ def is_port_range_subset(port1, port2):
 # ************************************************************************** #
 
 def is_redundant(rule1: Dict, rule2: Dict) -> bool:
-    if "Enabled" in rule1["Status"] and "Enabled" in rule2["Status"]:
+    logging.debug("FUNCTION: is_redundant()")
+
+    if "Enabled" in rule1.get("Status", "") and "Enabled" in rule2.get("Status", ""):
         source_match = all(any(is_subnet_of(src2, src1) for src1 in rule1["Source"]) for src2 in rule2["Source"])
         #print(f"Source_match: {source_match}")
         destination_match = all(any(is_subnet_of(dst2, dst1) for dst1 in rule1["Destination"]) for dst2 in rule2["Destination"])
@@ -132,19 +136,29 @@ def find_redundant_rules(rules: List[Dict]) -> List[Dict]:
 # ********************** 'ANY' DETECTION FUNCTIONS: ************************ #
 # ************************************************************************** #
 def rule_have_x_any(rule):
+    logging.info("FUNCTION: rule_have_x_any()")
+
     quantity = 0
     have_any = False
-    if "Enabled" in rule["Status"]:
-        if rule["Source"] == "ANY":
+    conflict_type = ""
+    if "Enabled" in rule.get("Status", ""):
+        if "ANY" in rule["Source"] or "ALL" in rule["Source"]:
             quantity += 1
             have_any = True
-        if rule["Destination"] == "ANY":
+            conflict_type = "Any: Origin"
+        if "ANY" in rule["Destination"] or "ALL" in rule["Destination"]:
             quantity += 1
             have_any = True
-        if rule["Service"] == "ANY":
+            conflict_type = "Any: Destination"
+        if "ANY" in rule["Service"] or "ALL" in rule["Service"]:
             quantity += 1
             have_any = True
-    return have_any, quantity
+            conflict_type = "Any: Application/protocol"
+        if quantity == 2:
+            conflict_type = "Any: 2 fields"
+        if quantity == 3:
+            conflict_type = "Any: 3 fields"
+    return have_any, conflict_type
     
 
 def find_any_in_rules(rules: List[Dict]) -> List[Dict]:
@@ -162,12 +176,18 @@ def find_any_in_rules(rules: List[Dict]) -> List[Dict]:
 # ****************** INSECURE RULE DETECTION FUNCTIONS: ******************** #
 # ************************************************************************** #
 def have_insecure_protocols(rule):
+    logging.info("FUNCTION: have_insecure_protocols()")
+
     """Verifica si una regla contiene servicios considerados inseguros."""
-    if "Enabled" in rule["Status"]:
-        for service in rule["Service"]:
-            for protocol, port in STRICT_POLICY_INSECURE_PROTOCOLS.items():
-                if is_port_range_subset(service, str(port)):
+    if "Enabled" in rule.get("Status", ""):
+        #if "ALLOW" in rule.get("Action"):
+        if "ACCEPT" in rule.get("Action"):
+            for service in rule["Service"]:
+                if service == "ANY" or service == "ALL":
                     return True
+                for protocol, port in STRICT_POLICY_INSECURE_PROTOCOLS.items():
+                    if is_port_range_subset(service, str(port)):
+                        return True
     return False
 
 def find_insecure_rules(rules: List[Dict]) -> List[Dict]:
@@ -181,12 +201,14 @@ def find_insecure_rules(rules: List[Dict]) -> List[Dict]:
 # **************** LAST RULE DENY ALL DETECTION FUNCTIONS: ***************** #
 # ************************************************************************** #
 def is_remaining_traffic_denied(rules: List[Dict]) -> bool:
+    logging.info("FUNCTION: is_remaining_traffic_denied()")
+
     """Verifica si la última regla bloquea todo el tráfico restante."""
     if not rules:
         return False
     
     last_rule = rules[-1]  # Última regla
-    if "Enabled" in last_rule["Status"]:
+    if "Enabled" in last_rule.get("Status", ""):
         if last_rule["Action"].upper() != "DENY":
             return False
         
@@ -199,7 +221,9 @@ def is_remaining_traffic_denied(rules: List[Dict]) -> bool:
 # ****************** DISABLED RULES DETECTION FUNCTION: ******************** #
 # ************************************************************************** #
 def is_disabled(rule):
-    if "Disabled" in rule["Status"]:
+    logging.info("FUNCTION: is_disabled()")
+
+    if "Disabled" in rule.get("Status", "").strip():
         return True
     else:
         return False
@@ -207,33 +231,40 @@ def is_disabled(rule):
 # ************************************************************************** #
 # ******************** NOT IN USE DETECTION FUNCTION: ********************** #
 # ************************************************************************** #
-def is_rule_in_use(rule):
-    if "0" in rule["Hit Count"]:
-        return False
-    else:
-        return True
+def is_not_in_use(rule) -> bool:
+    logging.info("FUNCTION: is_not_in_use()")
+
+    if "Enabled" in rule.get("Status", ""):
+        if rule["Hit Count"] == 0:
+            return True
+        else:
+            print("Entro False")
+            return False
     
 # ************************************************************************** #
 # ******************* SHADOW RULE DETECTION FUNCTION: ********************** #
 # ************************************************************************** #
-def is_shadowed(rule_lower: Dict, rule_upper: Dict) -> Union[str, bool]:
+def is_shadowed(rule_lower: Dict, rule_upper: Dict):
+    logging.info("FUNCTION: is_shadowed()")
+
     """
     Determina si la regla `rule_lower` está opacada por la regla `rule_upper`.
     """
-    action_lower = rule_lower['Action']
-    action_upper = rule_upper['Action']
+    if "Enabled" in rule_lower.get("Status", "") and "Enabled" in rule_upper.get("Status", ""):
+        action_lower = rule_lower['Action']
+        action_upper = rule_upper['Action']
+        
+        ip_src_relation = is_subnet_of(rule_lower['Source'][0], rule_upper['Source'][0])
+        ip_dst_relation = is_subnet_of(rule_lower['Destination'][0], rule_upper['Destination'][0])
+        port_relation = is_port_range_subset(rule_lower['Service'][0], rule_upper['Service'][0])
+        
+        if ip_src_relation and ip_dst_relation and port_relation:
+            if action_upper == "ALLOW" and action_lower == "DENY":
+                return True, "Partially Shadowed" if any(x == "Partially Shadowed" for x in [ip_src_relation, ip_dst_relation, port_relation]) else "Fully Shadowed"
+            elif action_upper == action_lower:
+                return True, "Fully Shadowed"
     
-    ip_src_relation = is_subnet_of(rule_lower['Source'][0], rule_upper['Source'][0])
-    ip_dst_relation = is_subnet_of(rule_lower['Destination'][0], rule_upper['Destination'][0])
-    port_relation = is_port_range_subset(rule_lower['Service'][0], rule_upper['Service'][0])
-    
-    if ip_src_relation and ip_dst_relation and port_relation:
-        if action_upper == "ALLOW" and action_lower == "DENY":
-            return "Partial" if any(x == "Partial" for x in [ip_src_relation, ip_dst_relation, port_relation]) else "Fully"
-        elif action_upper == action_lower:
-            return "Fully"
-    
-    return False
+    return False, "Not Shadowed"
 
 def detect_shadow_rules(rules: List[Dict]) -> List[Dict]:
     """

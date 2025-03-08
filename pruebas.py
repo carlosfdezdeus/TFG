@@ -1,4 +1,4 @@
-from Functions.conflict_detection_functions import is_port_range_subset, is_subnet_of,is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied, is_disabled, is_rule_in_use, detect_shadow_rules
+from Functions.conflict_detection_functions import is_port_range_subset, is_subnet_of,is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied, is_disabled, is_not_in_use, detect_shadow_rules
 
 # ************************************************************************** #
 # ******************** PRUEBA FUNCIÓN SOLAPE DE PUERTOS ******************** #
@@ -463,7 +463,7 @@ rule_without_hits = {
 
 print("- PRUEBA FUNCIÓN IS_NOT_IN_USE:")
 for i, rule in enumerate([rule_with_hits, rule_without_hits], start=1):
-    print(f"    Regla {i}: Está en uso? {is_rule_in_use(rule)}")
+    print(f"    Regla {i}: No está en uso? {is_not_in_use(rule)}")
 print("")
 
 
@@ -471,9 +471,6 @@ print("")
 # ************************************************************************** #
 # ********************* PRUEBA FUNCIÓN REGLAS SHADOWED ********************* #
 # ************************************************************************** #
-# **************************************************************************  #
-# ******************* PRUEBA FUNCIÓN REGLAS SHADOW **********************  #
-# **************************************************************************  #
 test_rules = [
     {"ID": 3, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80, 8080, 443"], "Action": "ALLOW"},
     {"ID": 4, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080, 8081"], "Action": "DENY"},

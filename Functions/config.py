@@ -1,11 +1,12 @@
 import os
 
-FILES_DIR = "Files"
-DB_FW_RULES = os.path.join(FILES_DIR, "firewall_rules.db")
-DB_FW_CONFLICTS = os.path.join(FILES_DIR, "firewall_conflict_rules.db")
+INPUT_DATA_DIR = "Input data"
+DATABASES_DIR = "Databases"
+#DB_FW_RULES = os.path.join(FILES_DIR, "firewall_rules.db")
+DB_FW_CONFLICTS = os.path.join(DATABASES_DIR, "firewall_conflict_rules.db")
 #JSON_FILE_PATH = os.path.join(FILES_DIR, "firewall_rules.json")
 #JSON_FILE_PATH = os.path.join(FILES_DIR, "firewall_rules_final.json")
-JSON_FILE_PATH = os.path.join(FILES_DIR, "firewall_rules_dyc.json")
+JSON_FILE_PATH = os.path.join(INPUT_DATA_DIR, "prueba.json")
 import ipaddress
 from typing import Dict
 
@@ -33,4 +34,19 @@ STRICT_POLICY_INSECURE_PROTOCOLS = {
     "SSDP": 1900,
     "WSD": 3702,
     "mDNS": 5353
+}
+
+CRITICALITY = {
+    "Not in use": "Low",
+    "Disabled": "Low",
+    "Redundant": "Low",
+    "Fully Shadowed": "Medium",
+    "Partially Shadowed": "Medium",
+    "Bidirectional": "Medium",
+    "Any: Application/protocol": "Medium",
+    "Any: Origin": "Medium",
+    "Any: Destination": "High",
+    "Insecure": "High",
+    "Any: 2 fields": "Critical",
+    "Any: 3 fields": "Critical"
 }

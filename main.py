@@ -1,8 +1,10 @@
-from Functions.conflict_detection_functions import firewall_rule_analizer
-from Functions.database_management_functions import create_firewall_rules_database, read_firewall_rules, display_rules
-import argparse
+from Functions.file_management_functions import load_rules_from_file, create_conflict_database, insert_conflict_rule, diplay_conflictive_rules
+from Functions.conflict_detection_functions import is_redundant, rule_have_x_any, is_disabled, is_not_in_use, have_insecure_protocols, is_shadowed
+import argparse, logging
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
     # Configurar los argumentos de la terminal
     # Configurar los argumentos de la terminal con una mejor descripción
     parser = argparse.ArgumentParser(
@@ -27,10 +29,35 @@ if __name__ == '__main__':
     parser.set_defaults(show_graph=True)  # Por defecto, el gráfico se muestra
 
     args = parser.parse_args()
+
+    # Detección de reglas conflictivas:
+    create_conflict_database()
+    rules = load_rules_from_file()
     
-    create_firewall_rules_database()
-    read_firewall_rules()
-    display_rules()
-    
-    rules = firewall_rule_analizer()
-    print(rules)
+    for i, rule1 in enumerate(rules):
+        print(rule1)
+        if is_disabled(rule1): #FUNCIONA
+            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']}, is DISABLED.")
+            insert_conflict_rule(rule1, None, "Disabled")
+
+        if is_not_in_use(rule1) == True:    #FUNCIONA
+            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']}, is NOT IN USE.")
+            insert_conflict_rule(rule1, None, "Not in use")
+
+        if have_insecure_protocols(rule1) == True:  #FUNCIONA
+            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']}, is allow traffic from INSECURE PROTOCOLS.")
+            insert_conflict_rule(rule1, None, "Insecure")
+
+        have_any, conflict_type = rule_have_x_any(rule1)
+        if have_any:
+            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']}, have the following conlict type, {conflict_type.upper()}.")
+            insert_conflict_rule(rule1, None, conflict_type)
+        for j, rule2 in enumerate(rules):
+            if i != j:
+                if is_redundant(rule1, rule2) == True:
+                    insert_conflict_rule(rule1, rule2, "Redundant")
+                shadowed, conflict_type = is_shadowed(rule1, rule2)
+                if shadowed == True:
+                    insert_conflict_rule(rule1, rule2, conflict_type)
+        print("\n")
+    diplay_conflictive_rules()
