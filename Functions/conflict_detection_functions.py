@@ -9,7 +9,7 @@ import ipaddress, re, logging
 def expand_ips(ip_str):    
     ip_str = ip_str.strip()
 
-    if ip_str.upper() == "ANY":
+    if ip_str.upper() == "ANY" or ip_str.upper() == "ALL":
         return ipaddress.ip_network("0.0.0.0/0", strict=False)
     
     if '/' in ip_str:
@@ -122,16 +122,7 @@ def is_redundant(rule1: Dict, rule2: Dict) -> bool:
         return source_match and destination_match and service_match and action_match
     else: 
         return False
-
-def find_redundant_rules(rules: List[Dict]) -> List[Dict]:
-    """Encuentra reglas redundantes en la lista de reglas."""
-    redundant_rules = []
-    for i, rule1 in enumerate(rules):
-        for j, rule2 in enumerate(rules):
-            if i != j and is_redundant(rule1, rule2):
-                redundant_rules.append({"Redundant Rule": rule2, "Covered By": rule1})
-    return redundant_rules
-
+    
 # ************************************************************************** #
 # ********************** 'ANY' DETECTION FUNCTIONS: ************************ #
 # ************************************************************************** #
@@ -160,18 +151,6 @@ def rule_have_x_any(rule):
             conflict_type = "Any: 3 fields"
     return have_any, conflict_type
     
-
-def find_any_in_rules(rules: List[Dict]) -> List[Dict]:
-    rules_with_any = []
-    for i, rule in enumerate(rules):
-        have_any, quantity = rule_have_x_any(rule)
-        if have_any:
-            type_text = f"Rule {rule['ID']} has {quantity} anys"
-            print(type_text)
-            # meter en la BD con X anys
-            rules_with_any.append(rule)  # Agregar la regla a la lista en lugar de un valor vacío
-    return rules_with_any
-
 # ************************************************************************** #
 # ****************** INSECURE RULE DETECTION FUNCTIONS: ******************** #
 # ************************************************************************** #
@@ -190,32 +169,23 @@ def have_insecure_protocols(rule):
                         return True
     return False
 
-def find_insecure_rules(rules: List[Dict]) -> List[Dict]:
-    rules_with_insecure_protocols = []
-    for i, rule in enumerate(rules):
-        if(have_insecure_protocols()):
-            rules_with_insecure_protocols.append()
-    return rules_with_insecure_protocols
-
 # ************************************************************************** #
 # **************** LAST RULE DENY ALL DETECTION FUNCTIONS: ***************** #
 # ************************************************************************** #
-def is_remaining_traffic_denied(rules: List[Dict]) -> bool:
+def is_remaining_traffic_denied(rule):
     logging.info("FUNCTION: is_remaining_traffic_denied()")
 
-    """Verifica si la última regla bloquea todo el tráfico restante."""
-    if not rules:
-        return False
-    
-    last_rule = rules[-1]  # Última regla
-    if "Enabled" in last_rule.get("Status", ""):
-        if last_rule["Action"].upper() != "DENY":
+    if "Enabled" in rule.get("Status", ""):
+        if rule["Action"].upper() != "DENY":
             return False
-        
-        if last_rule["Source"] == ["ANY"] and last_rule["Destination"] == ["ANY"] and last_rule["Service"] == ["ANY"]:
+        if ("ANY" in rule["Source"] or "ALL" in rule["Source"]) and \
+           ("ANY" in rule["Destination"] or "ALL" in rule["Destination"]) and \
+           ("ANY" in rule["Service"] or "ALL" in rule["Service"]):
             return True
-        
-    return False
+
+    return False  
+
+
 
 # ************************************************************************** #
 # ****************** DISABLED RULES DETECTION FUNCTION: ******************** #

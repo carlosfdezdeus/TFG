@@ -48,5 +48,6 @@ CRITICALITY = {
     "Any: Destination": "High",
     "Insecure": "High",
     "Any: 2 fields": "Critical",
-    "Any: 3 fields": "Critical"
+    "Any: 3 fields": "Critical",
+    "Remaining traffic not denied": "Critical"
 }

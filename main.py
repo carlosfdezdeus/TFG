@@ -1,5 +1,5 @@
 from Functions.file_management_functions import load_rules_from_file, create_conflict_database, insert_conflict_rule, diplay_conflictive_rules
-from Functions.conflict_detection_functions import is_redundant, rule_have_x_any, is_disabled, is_not_in_use, have_insecure_protocols, is_shadowed
+from Functions.conflict_detection_functions import is_redundant, rule_have_x_any, is_disabled, is_not_in_use, have_insecure_protocols, is_shadowed, is_remaining_traffic_denied
 import argparse, logging
 
 if __name__ == '__main__':
@@ -33,12 +33,15 @@ if __name__ == '__main__':
     # Detección de reglas conflictivas:
     create_conflict_database()
     rules = load_rules_from_file()
-    
-    for i, rule1 in enumerate(rules):
+
+    last_enabled_rule = None  # Variable para almacenar la última regla habilitada
+    for i, rule1 in enumerate(rules):   
         print(rule1)
         if is_disabled(rule1): #FUNCIONA
             logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']} is DISABLED.")
             insert_conflict_rule(rule1, None, "Disabled")
+        else:
+            last_enabled_rule = rule1
 
         if is_not_in_use(rule1) == True:    #FUNCIONA
             logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']} is NOT IN USE.")
@@ -63,5 +66,11 @@ if __name__ == '__main__':
                 if shadowed == True:
                     logging.info(f"CONFLICT DETECTED: Rules with IDs: {rule2['ID']} is {conflict_type.upper()} with {rule1['ID']}.")
                     insert_conflict_rule(rule1, rule2, conflict_type)
+
+        if i == len(rules) - 1:
+            if not is_remaining_traffic_denied(last_enabled_rule):
+                logging.info(f"CONFLICT DETECTED: Last rule, with ID: {rule1['ID']}, does NOT DENY REMAINING TRAFFIC.")
+                insert_conflict_rule(rule1, None, "Remaining traffic not denied")
+
         print("\n")
     #diplay_conflictive_rules()

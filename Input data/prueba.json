@@ -195,6 +195,28 @@
       "ID": "103"
     },
     {
+      "Policy": "BLOCK_ALL (103)",
+      "Source": ["ALL"],
+      "Destination": ["ALL"],
+      "Schedule": ["always"],
+      "Service": ["ALL"],
+      "Action": "DENY",
+      "IP Pool": [],
+      "NAT": "Disabled",
+      "Type": "Standard",
+      "Security Profiles": ["default"],
+      "Log": "All",
+      "Bytes": "0 MB",
+      "Active Sessions": 0,
+      "Application Control": ["default"],
+      "AV": ["default"],
+      "Comments": "Block all traffic (conflicting with other rules)",
+      "Status": "Enabled",
+      "Hit Count": 0,
+      "Inspection Mode": "Flow-based",
+      "ID": "104"
+    },
+    {
       "Policy": "DISABLED_FTP (104)",
       "Source": ["192.168.1.0/24"],
       "Destination": ["10.10.30.0/24"],
@@ -214,6 +236,6 @@
       "Status": "Disabled",
       "Hit Count": 0,
       "Inspection Mode": "Flow-based",
-      "ID": "104"
+      "ID": "105"
     }
 ]
