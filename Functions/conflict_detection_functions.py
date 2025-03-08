@@ -108,7 +108,7 @@ def is_port_range_subset(port1, port2):
 # ************************************************************************** #
 
 def is_redundant(rule1: Dict, rule2: Dict) -> bool:
-    logging.debug("FUNCTION: is_redundant()")
+    logging.info("FUNCTION: is_redundant()")
 
     if "Enabled" in rule1.get("Status", "") and "Enabled" in rule2.get("Status", ""):
         source_match = all(any(is_subnet_of(src2, src1) for src1 in rule1["Source"]) for src2 in rule2["Source"])
@@ -238,7 +238,6 @@ def is_not_in_use(rule) -> bool:
         if rule["Hit Count"] == 0:
             return True
         else:
-            print("Entro False")
             return False
     
 # ************************************************************************** #

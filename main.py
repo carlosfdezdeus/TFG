@@ -37,27 +37,31 @@ if __name__ == '__main__':
     for i, rule1 in enumerate(rules):
         print(rule1)
         if is_disabled(rule1): #FUNCIONA
-            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']}, is DISABLED.")
+            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']} is DISABLED.")
             insert_conflict_rule(rule1, None, "Disabled")
 
         if is_not_in_use(rule1) == True:    #FUNCIONA
-            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']}, is NOT IN USE.")
+            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']} is NOT IN USE.")
             insert_conflict_rule(rule1, None, "Not in use")
 
         if have_insecure_protocols(rule1) == True:  #FUNCIONA
-            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']}, is allow traffic from INSECURE PROTOCOLS.")
+            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']} allows traffic from INSECURE PROTOCOLS.")
             insert_conflict_rule(rule1, None, "Insecure")
 
         have_any, conflict_type = rule_have_x_any(rule1)
         if have_any:
-            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']}, have the following conlict type, {conflict_type.upper()}.")
+            logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']} have the following conlict type, {conflict_type.upper()}.")
             insert_conflict_rule(rule1, None, conflict_type)
+    
         for j, rule2 in enumerate(rules):
             if i != j:
-                if is_redundant(rule1, rule2) == True:
+                if is_redundant(rule1, rule2):
+                    logging.info(f"CONFLICT DETECTED: Rules with IDs: {rule2['ID']} is REDUNDANT with {rule1['ID']}.")
                     insert_conflict_rule(rule1, rule2, "Redundant")
+
                 shadowed, conflict_type = is_shadowed(rule1, rule2)
                 if shadowed == True:
+                    logging.info(f"CONFLICT DETECTED: Rules with IDs: {rule2['ID']} is {conflict_type.upper()} with {rule1['ID']}.")
                     insert_conflict_rule(rule1, rule2, conflict_type)
         print("\n")
-    diplay_conflictive_rules()
+    #diplay_conflictive_rules()

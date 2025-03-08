@@ -1,5 +1,5 @@
 from Functions.config import DB_FW_CONFLICTS, DATABASES_DIR, JSON_FILE_PATH, CRITICALITY
-import json, sqlite3, os
+import json, sqlite3, os, logging
 import pandas as pd
 from typing import List, Dict
 
@@ -33,6 +33,8 @@ def load_rules_from_file(filename=JSON_FILE_PATH) -> List[Dict]:
     return rules
 
 def create_conflict_database():
+    logging.info("FUNCTION: create_conflict_database()")
+
     # Crear la carpeta de la base de datos si no existe
     if not os.path.exists(DATABASES_DIR):
         os.makedirs(DATABASES_DIR, exist_ok=True)
@@ -57,25 +59,33 @@ def create_conflict_database():
             status_rule_1 TEXT,
             status_rule_2 TEXT,
             conflict_type TEXT,
-            criticality TEXT
+            criticality TEXT,
+            UNIQUE (id_rule_1, id_rule_2, 
+                    source_rule_1, source_rule_2, 
+                    destination_rule_1, destination_rule_2,
+                    service_rule_1, service_rule_2,
+                    action_rule_1, action_rule_2, 
+                    hit_count_rule_1, hit_count_rule_2,
+                    status_rule_1, status_rule_2,
+                    conflict_type, criticality) 
         )
     ''')
     conn.commit()
     conn.close()
 
-def insert_conflict_rule(rule1, rule2, conflict_type):
-    """ Inserta un conflicto en la base de datos, manejando NULL si rule2 es None. """
 
-    # Determinar la criticalidad basada en el tipo de conflicto
+def insert_conflict_rule(rule1, rule2, conflict_type):
+    """Inserta un conflicto en la base de datos si no existe previamente."""
+    logging.info("FUNCTION: insert_conflict_rule()")
+
     criticality = CRITICALITY.get(conflict_type, "Unknown")
 
-    # Función auxiliar para obtener valores de manera segura
     def safe_get(rule, key):
         return json.dumps(rule[key]) if rule and key in rule else None
 
     conn = sqlite3.connect(DB_FW_CONFLICTS)
     cursor = conn.cursor()
-    
+
     try:
         cursor.execute('''
             INSERT INTO firewall_conflict_rules (
@@ -87,40 +97,40 @@ def insert_conflict_rule(rule1, rule2, conflict_type):
                 hit_count_rule_1, hit_count_rule_2,
                 status_rule_1, status_rule_2,
                 conflict_type, criticality
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING
         ''', (
             rule1["ID"], 
-            rule2["ID"] if rule2 else None,  # Si rule2 es None, insertar NULL
+            rule2["ID"] if rule2 else 'NULL',
 
             safe_get(rule1, "Source"), 
-            safe_get(rule2, "Source") if rule2 else None,
+            safe_get(rule2, "Source") if rule2 else 'NULL',
 
             safe_get(rule1, "Destination"), 
-            safe_get(rule2, "Destination") if rule2 else None,
+            safe_get(rule2, "Destination") if rule2 else 'NULL',
 
             safe_get(rule1, "Service"), 
-            safe_get(rule2, "Service") if rule2 else None,
+            safe_get(rule2, "Service") if rule2 else 'NULL',
 
             rule1["Action"], 
-            rule2["Action"] if rule2 else None,
+            rule2["Action"] if rule2 else 'NULL',
 
             int(rule1.get("Hit Count", 0)), 
-            int(rule2.get("Hit Count", 0)) if rule2 else None,
+            int(rule2.get("Hit Count", 0)) if rule2 else 'NULL',
 
             safe_get(rule1, "Status"), 
-            safe_get(rule2, "Status") if rule2 else None,
+            safe_get(rule2, "Status") if rule2 else 'NULL',
 
             conflict_type, criticality
         ))
-        
-        conn.commit()
-        #print("Conflicto insertado correctamente.")
 
-    except sqlite3.IntegrityError as e:
-        print(f"Error al insertar el conflicto: {e}")
+        conn.commit()
+
+    except sqlite3.Error as e:
+        logging.error(f"Error inserting conflict: {e}")
 
     finally:
         conn.close()
+
 
 def get_conflictive_rules_from_db():
     conn = sqlite3.connect(DB_FW_CONFLICTS)
