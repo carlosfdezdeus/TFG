@@ -1,4 +1,7 @@
-from Functions.conflict_detection_functions import is_port_range_subset, is_subnet_of,is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied, is_disabled, is_not_in_use, detect_shadow_rules
+from Functions.conflict_detection_functions import is_port_range_subset, is_subnet_of,is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied, is_disabled, is_not_in_use, is_shadowed
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # ************************************************************************** #
 # ******************** PRUEBA FUNCIÓN SOLAPE DE PUERTOS ******************** #
@@ -387,12 +390,44 @@ rules5 = [
 rules6 = rules2 + rules3 + rules4 + rules5 + rules1
 # Ejecutamos las pruebas
 print("- PRUEBA FUNCIÓN DENIEGO TRÁFICO RESTANTE:")
-print("     Caso 1:", is_remaining_traffic_denied(rules1))  # True
-print("     Caso 2:", is_remaining_traffic_denied(rules2))  # False
-print("     Caso 3:", is_remaining_traffic_denied(rules3))  # False
-print("     Caso 4:", is_remaining_traffic_denied(rules4))  # False
-print("     Caso 5:", is_remaining_traffic_denied(rules5))  # False
-print("     Caso 6:", is_remaining_traffic_denied(rules6))  # False
+
+last_enabled_rule = None  # Variable para almacenar la última regla habilitada
+for i, rule1 in enumerate(rules1):
+    if i == len(rules) - 1:
+        if not is_remaining_traffic_denied(last_enabled_rule):
+            logging.info(f"Caso 1:  CONFLICT DETECTED: Last rule, with ID: {rule1['ID']}, does NOT DENY REMAINING TRAFFIC.")
+last_enabled_rule = None  # Variable para almacenar la última regla habilitada
+for i, rule1 in enumerate(rules2):
+    if i == len(rules) - 1:
+        if not is_remaining_traffic_denied(last_enabled_rule):
+            logging.info(f"Caso 2:  CONFLICT DETECTED: Last rule, with ID: {rule1['ID']}, does NOT DENY REMAINING TRAFFIC.")
+last_enabled_rule = None  # Variable para almacenar la última regla habilitada
+for i, rule1 in enumerate(rules3):
+    if i == len(rules) - 1:
+        if not is_remaining_traffic_denied(last_enabled_rule):
+            logging.info(f"Caso 3:  CONFLICT DETECTED: Last rule, with ID: {rule1['ID']}, does NOT DENY REMAINING TRAFFIC.")
+last_enabled_rule = None  # Variable para almacenar la última regla habilitada
+for i, rule1 in enumerate(rules4):
+    if i == len(rules) - 1:
+        if not is_remaining_traffic_denied(last_enabled_rule):
+            logging.info(f"Caso 4:  CONFLICT DETECTED: Last rule, with ID: {rule1['ID']}, does NOT DENY REMAINING TRAFFIC.")
+last_enabled_rule = None  # Variable para almacenar la última regla habilitada
+for i, rule1 in enumerate(rules5):
+    if i == len(rules) - 1:
+        if not is_remaining_traffic_denied(last_enabled_rule):
+            logging.info(f"Caso 5:  CONFLICT DETECTED: Last rule, with ID: {rule1['ID']}, does NOT DENY REMAINING TRAFFIC.")
+last_enabled_rule = None  # Variable para almacenar la última regla habilitada
+for i, rule1 in enumerate(rules6):
+    if i == len(rules) - 1:
+        if not is_remaining_traffic_denied(last_enabled_rule):
+            logging.info(f"Caso 6:  CONFLICT DETECTED: Last rule, with ID: {rule1['ID']}, does NOT DENY REMAINING TRAFFIC.")
+
+# print("     Caso 1:", is_remaining_traffic_denied(rules1))  # True
+# print("     Caso 2:", is_remaining_traffic_denied(rules2))  # False
+# print("     Caso 3:", is_remaining_traffic_denied(rules3))  # False
+# print("     Caso 4:", is_remaining_traffic_denied(rules4))  # False
+# print("     Caso 5:", is_remaining_traffic_denied(rules5))  # False
+# print("     Caso 6:", is_remaining_traffic_denied(rules6))  # False
 
 # ************************************************************************** #
 # ******************* PRUEBA FUNCIÓN REGLAS DESHABILITADAS ***************** #
@@ -472,24 +507,36 @@ print("")
 # ********************* PRUEBA FUNCIÓN REGLAS SHADOWED ********************* #
 # ************************************************************************** #
 test_rules = [
-    {"ID": 3, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80, 8080, 443"], "Action": "ALLOW"},
-    {"ID": 4, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080, 8081"], "Action": "DENY"},
-    {"ID": 5, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "ALLOW"},
-    {"ID": 6, "Source": ["10.0.0.0/16"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "DENY"},
-    {"ID": 7, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "ALLOW"},
-    {"ID": 8, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/16"], "Service": ["80"], "Action": "DENY"},
-    {"ID": 9, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "ALLOW"},
-    {"ID": 10, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["3128 - 3200"], "Action": "DENY"},
-    {"ID": 11, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "ALLOW"},
-    {"ID": 12, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "DENY"},
-    {"ID": 13, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80, 8080"], "Action": "ALLOW"},
-    {"ID": 14, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080"], "Action": "DENY"}
-]
+    {"ID": 3, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80, 8080, 443"], "Action": "ALLOW", "Status": "Enabled"},
+    {"ID": 4, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080, 8081"], "Action": "DENY", "Status": "Enabled"},      # Partially Shadow with 3
+    {"ID": 5, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/16"], "Service": ["80"], "Action": "ALLOW", "Status": "Enabled"},             # Partially Shadow with 3
+    {"ID": 6, "Source": ["10.0.0.0/28"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "DENY", "Status": "Enabled"}]             # Fully Shadow with 3 & 5
+
+# test_rules = [
+#     {"ID": 3, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80, 8080, 443"], "Action": "ALLOW", "Status": "Enabled"},
+#     {"ID": 4, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080, 8081"], "Action": "DENY", "Status": "Enabled"},      # Partially Shadow with 3
+#     {"ID": 5, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/16"], "Service": ["80"], "Action": "ALLOW", "Status": "Enabled"},             # Partially Shadow with 3
+#     {"ID": 6, "Source": ["10.0.0.0/28"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "DENY", "Status": "Enabled"},              # Fully Shadow with 3 & 5
+#     {"ID": 7, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "ALLOW", "Status": "Enabled"},
+#     {"ID": 8, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/16"], "Service": ["80"], "Action": "DENY", "Status": "Enabled"},
+#     {"ID": 9, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "ALLOW", "Status": "Enabled"},
+#     {"ID": 10, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["3128 - 3200"], "Action": "DENY", "Status": "Enabled"},
+#     {"ID": 11, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "ALLOW", "Status": "Enabled"},
+#     {"ID": 12, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "DENY", "Status": "Enabled"},
+#     {"ID": 13, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80, 8080"], "Action": "ALLOW", "Status": "Enabled"},
+#     {"ID": 14, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080"], "Action": "DENY", "Status": "Enabled"}
+# ]
 
 # Ejecutamos pruebas
 print("- PRUEBA FUNCIÓN REGLAS SHADOW:")
-for result in detect_shadow_rules(test_rules):
-    print(f"  Regla {result['Rule1']['ID']}: {result['Rule1']}")
-    print(f"  Regla {result['Rule2']['ID']}: {result['Rule2']}")
-    print(f"  Shadow Type: {result['Shadow Type']}")
-    print("  --------------------------------")
+
+for i, rule1 in enumerate(test_rules):  
+        for j, rule2 in enumerate(test_rules):
+            if i != j:
+                shadowed, conflict_type = is_shadowed(rule1, rule2)
+                if shadowed == True:
+                    logging.info(f"CONFLICT DETECTED: Rules with IDs: {rule2['ID']} is {conflict_type.upper()} with {rule1['ID']}.")
+                    print(f"  Regla {rule1['ID']}: {rule1}")
+                    print(f"  Regla {rule2['ID']}: {rule2}")
+                    print(f"  Shadow Type: {conflict_type}")
+                    print("  --------------------------------")

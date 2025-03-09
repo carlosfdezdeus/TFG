@@ -159,8 +159,7 @@ def have_insecure_protocols(rule):
 
     """Verifica si una regla contiene servicios considerados inseguros."""
     if "Enabled" in rule.get("Status", ""):
-        #if "ALLOW" in rule.get("Action"):
-        if "ACCEPT" in rule.get("Action"):
+        if "ACCEPT" in rule.get("Action") or "ALLOW" in rule.get("Action"):
             for service in rule["Service"]:
                 if service == "ANY" or service == "ALL":
                     return True
@@ -175,7 +174,8 @@ def have_insecure_protocols(rule):
 def is_remaining_traffic_denied(rule):
     logging.info("FUNCTION: is_remaining_traffic_denied()")
 
-    if "Enabled" in rule.get("Status", ""):
+    #if "Enabled" in rule.get("Status", ""):
+    if "Enabled" in rule["Status"]:
         if rule["Action"].upper() != "DENY":
             return False
         if ("ANY" in rule["Source"] or "ALL" in rule["Source"]) and \
@@ -215,6 +215,8 @@ def is_not_in_use(rule) -> bool:
 # ************************************************************************** #
 def is_shadowed(rule_lower: Dict, rule_upper: Dict):
     logging.info("FUNCTION: is_shadowed()")
+    #print(rule_lower.get("ID"))
+    #print(rule_upper.get("ID"))
 
     """
     Determina si la regla `rule_lower` está opacada por la regla `rule_upper`.
@@ -222,32 +224,39 @@ def is_shadowed(rule_lower: Dict, rule_upper: Dict):
     if "Enabled" in rule_lower.get("Status", "") and "Enabled" in rule_upper.get("Status", ""):
         action_lower = rule_lower['Action']
         action_upper = rule_upper['Action']
-        
+        # print(rule_lower.get("Source"))
+        # print(rule_lower.get("Source"))
+        # print(rule_lower['Source'][0])
+
         ip_src_relation = is_subnet_of(rule_lower['Source'][0], rule_upper['Source'][0])
+        # print(f"IP src relation: {ip_src_relation}")
         ip_dst_relation = is_subnet_of(rule_lower['Destination'][0], rule_upper['Destination'][0])
+        # print(f"IP src relation: {ip_dst_relation}")
         port_relation = is_port_range_subset(rule_lower['Service'][0], rule_upper['Service'][0])
-        
+        # print(f"IP src relation: {port_relation}")
+
         if ip_src_relation and ip_dst_relation and port_relation:
-            if action_upper == "ALLOW" and action_lower == "DENY":
-                return True, "Partially Shadowed" if any(x == "Partially Shadowed" for x in [ip_src_relation, ip_dst_relation, port_relation]) else "Fully Shadowed"
-            elif action_upper == action_lower:
-                return True, "Fully Shadowed"
-    
+            if any(isinstance(value, str) and "Partial" in value for value in [ip_src_relation, ip_dst_relation, port_relation]):
+                return True, "Partially Shadowed" 
+            return True, "Fully Shadowed"
     return False, "Not Shadowed"
 
-def detect_shadow_rules(rules: List[Dict]) -> List[Dict]:
-    """
-    Detecta reglas shadowing, asegurando que una regla superior opaca a una inferior.
-    """
-    shadowed_rules = []
-    for i, rule_upper in enumerate(rules):
-        for j, rule_lower in enumerate(rules):
-            if i < j:  # Se asegura de comparar solo reglas superiores contra inferiores
-                shadow_status = is_shadowed(rule_lower, rule_upper)
-                if shadow_status:
-                    shadowed_rules.append({
-                        "Rule1": rule_upper,
-                        "Rule2": rule_lower,
-                        "Shadow Type": shadow_status
-                    })
-    return shadowed_rules
+# def detect_shadow_rules(rules: List[Dict]) -> List[Dict]:
+#     """
+#     Detecta reglas shadowing, asegurando que una regla superior opaca a una inferior.
+#     """
+    
+#     shadowed_rules = []
+#     for i, rule_upper in enumerate(rules):
+#         for j, rule_lower in enumerate(rules):
+#             if i != j:  # Se asegura de comparar solo reglas superiores contra inferiores
+#                 shadowed, conflict_type = is_shadowed(rule_upper, rule_lower)
+#                 if shadowed == True:
+#                     logging.info(f"CONFLICT DETECTED: Rules with IDs: {rule_lower['ID']} is {conflict_type.upper()} with {rule_upper['ID']}.")
+#                     shadowed_rules.append({
+#                         "Rule1": rule_upper,
+#                         "Rule2": rule_lower,
+#                         "Conflict Type": conflict_type
+#                     })
+#     return shadowed_rules
+
