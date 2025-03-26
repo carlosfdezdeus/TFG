@@ -111,14 +111,32 @@ redundant_rule8 = {
     "Hit Count": "341",
     "Status": "Enabled"
 } 
+redundant_rule9 = {
+    "Source": ["192.168.100.0/24"],
+    "Destination": ["10.10.10.50"],
+    "Service": ["80"],
+    "Action": "ALLOW",
+    "Hit Count": "341",
+    "Status": "Enabled"
+}  
+
+redundant_rule10 = {
+    "Source": ["192.168.100.0/16"],
+    "Destination": ["10.10.10.50"],
+    "Service": ["80"],
+    "Action": "ALLOW",
+    "Hit Count": "341",
+    "Status": "Enabled"
+} 
 
 # Ejecutamos pruebas
 print("- PRUEBA FUNCIÓN REGLAS REDUNDANTES:")
-print(f"    {is_redundant(redundant_rule1, redundant_rule2)}")  # True
-print(f"    {is_redundant(redundant_rule3, redundant_rule4)}")  # True
-print(f"    {is_redundant(redundant_rule5, redundant_rule6)}")  # True
-print(f"    {is_redundant(redundant_rule6, redundant_rule7)}")  # True
-print(f"    {is_redundant(redundant_rule7, redundant_rule8)}")  # True
+print(f"    Reglas 1 y 2: {is_redundant(redundant_rule1, redundant_rule2)}")  # True
+print(f"    Reglas 3 y 4: {is_redundant(redundant_rule3, redundant_rule4)}")  # True
+print(f"    Reglas 5 y 6: {is_redundant(redundant_rule5, redundant_rule6)}")  # True
+print(f"    Reglas 6 y 7: {is_redundant(redundant_rule6, redundant_rule7)}")  # True
+print(f"    Reglas 7 y 8: {is_redundant(redundant_rule7, redundant_rule8)}")  # True
+print(f"    Reglas 9 y 10: {is_redundant(redundant_rule9, redundant_rule10)}")  # True
 
 
 

@@ -57,18 +57,33 @@ CRITICALITY = {
     "Remaining traffic not denied": "Critical"
 }
 
-CONFLICT_STYLES = {
+# CONFLICT_LINE_STYLES = {
+#     # Low - Verde
+#     "Redundant": {"color": "green", "style": "-."},  # Línea punteada
+
+#     # Medium - Amarillo
+#     "Fully Shadowed": {"color": "orange", "style": "-"},  # Línea sólida
+#     "Partially Shadowed": {"color": "orange", "style": "--"},  # Línea discontinua
+# }
+
+CONFLICT_LINE_STYLES = {
+    "Redundant": {"node_color": "green", "edge_color": "green", "style": "-"},  # Nodo y línea verdes, sólida
+    "Fully Shadowed": {"node_color": "orange", "edge_color": "orange", "style": "-"},  # Nodo y línea naranjas, sólida
+    "Partially Shadowed": {"node_color": "orange", "edge_color": "orange", "style": "--"},  # Nodo y línea naranjas, discontinua
+}
+
+CONFLICT_NODE_STYLES = {
     # Low - Verde
-    "Not in use": {"color": "green", "style": "-"},  # Línea sólida
+    "Not in use": {"color": "green", "style": "-."},  # Línea punteada
     "Disabled": {"color": "green", "style": "--"},  # Línea discontinua
-    "Redundant": {"color": "green", "style": "-."},  # Línea punteada
+    "Redundant": {"color": "green", "style": "-"},  # Línea sólida
 
     # Medium - Amarillo
     "Fully Shadowed": {"color": "orange", "style": "-"},  # Línea sólida
-    "Partially Shadowed": {"color": "orange", "style": "--"},  # Línea discontinua
-    "Bidirectional": {"color": "orange", "style": "-."},  # Línea punteada
-    "Any: Application/protocol": {"color": "orange", "style": ":"},  # Línea de puntos
-    "Any: Origin": {"color": "orange", "style": (0, (3, 1, 1, 1))},  # Patrón personalizado (línea segmentada)
+    "Partially Shadowed": {"color": "orange", "style": "-"},  # Línea sólida
+    "Bidirectional": {"color": "orange", "style": "--"},  # Línea discontinua
+    "Any: Application/protocol": {"color": "orange", "style": "-."},  # Línea punteada
+    "Any: Origin": {"color": "orange", "style": ":"},  # Línea de puntos 
 
     # High - Rojo
     "Any: Destination": {"color": "red", "style": "-"},  # Línea sólida
@@ -76,6 +91,6 @@ CONFLICT_STYLES = {
 
     # Critical - Negro
     "Any: 2 fields": {"color": "black", "style": "-"},  # Línea de puntos
-    "Any: 3 fields": {"color": "black", "style": "-."},  # Línea punteada
+    "Any: 3 fields": {"color": "black", "style": "--"},  # Línea punteada
     "Remaining traffic not denied": {"color": "black", "style": "-."},  # Línea discontinua
 }

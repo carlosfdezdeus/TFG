@@ -34,7 +34,31 @@ First, they are loaded from a JSON file. Then, the intersections between the rul
 
 ## Main Functions: *concflict_detection_functiones.py*
 
-### 1. `is_redundant()`
+### 1. `expand_ips()`
+Guarda las reglas de un archivo JSON en una base de datos SQLite.
+
+#### **Detailed Description**:
+- Carga un archivo JSON que contiene una lista de reglas de firewall, cada una con detalles como el origen, destino, protocolo, rango de puertos, acción y descripción.
+- Crea una tabla en la base de datos SQLite (si no existe) para almacenar las reglas.
+- Inserta las reglas en la tabla de manera segura, asegurándose de no duplicar registros existentes.
+- Es útil para centralizar la gestión de reglas y prepararlas para su análisis posterior.
+
+#### **Parameters**:
+- `json_file` (str): Ruta al archivo JSON que contiene las reglas del firewall.
+- `db_name` (str): Nombre del archivo de base de datos SQLite. Por defecto, `"firewall_rules.db"`.
+
+#### **Examples**:
+```python
+functions.saveFWRules("reglasFW.json")
+```
+
+#### **Flow Diagrams**:
+<img src="Flow diagrams/Flow Diagram - is_shadowed().png" alt="FUNCIÓN: is_redundant()" width="350">
+
+
+
+### 2. `is_redundant()`
+Detects redundant rules 
 Guarda las reglas de un archivo JSON en una base de datos SQLite.
 
 #### **Detailed Description**:
@@ -54,4 +78,29 @@ functions.saveFWRules("reglasFW.json")
 
 #### **Flow Diagrams**:
 <img src="Flow diagrams/Flow Diagram - is_redundant().png" alt="FUNCIÓN: is_redundant()" width="200">
+
+
+
+### 3. `is_shadowed()`
+Guarda las reglas de un archivo JSON en una base de datos SQLite.
+
+#### **Detailed Description**:
+- Carga un archivo JSON que contiene una lista de reglas de firewall, cada una con detalles como el origen, destino, protocolo, rango de puertos, acción y descripción.
+- Crea una tabla en la base de datos SQLite (si no existe) para almacenar las reglas.
+- Inserta las reglas en la tabla de manera segura, asegurándose de no duplicar registros existentes.
+- Es útil para centralizar la gestión de reglas y prepararlas para su análisis posterior.
+
+#### **Parameters**:
+- `json_file` (str): Ruta al archivo JSON que contiene las reglas del firewall.
+- `db_name` (str): Nombre del archivo de base de datos SQLite. Por defecto, `"firewall_rules.db"`.
+
+#### **Examples**:
+```python
+functions.saveFWRules("reglasFW.json")
+```
+
+#### **Flow Diagrams**:
+<img src="Flow diagrams/Flow Diagram - is_shadowed().png" alt="FUNCIÓN: is_shadowed()" width="350">
+
+
 

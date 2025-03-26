@@ -132,12 +132,17 @@ def insert_conflict_rule(rule1, rule2, conflict_type):
         conn.close()
 
 
-def get_conflictive_rules_from_db():
+def get_conflict_rules():
     conn = sqlite3.connect(DB_FW_CONFLICTS)
-    rules_dataframe = pd.read_sql_query("SELECT * FROM firewall_conflict_rules", conn)
-    conn.close()
+    cursor = conn.cursor()
 
-    return rules_dataframe
+    query = "SELECT id_rule_1, id_rule_2, conflict_type FROM firewall_conflict_rules"
+    cursor.execute(query)
+    conflicts = cursor.fetchall()
+
+    conn.close()
+    
+    return conflicts
 
 
 def diplay_conflictive_rules():

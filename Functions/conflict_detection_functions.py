@@ -12,12 +12,12 @@ def expand_ips(ip_str):
     if ip_str.upper() == "ANY" or ip_str.upper() == "ALL":
         return ipaddress.ip_network("0.0.0.0/0", strict=False)
     
-    if '/' in ip_str:
-        return ipaddress.ip_network(ip_str, strict=False)
-    
     if ',' in ip_str:  # Caso de lista de IPs separadas por coma
         #print({ipaddress.ip_address(ip.strip()) for ip in ip_str.split(",")})
         return {ipaddress.ip_address(ip.strip()) for ip in ip_str.split(",")}
+    
+    if '/' in ip_str:
+        return ipaddress.ip_network(ip_str, strict=False)
     
     match = re.match(r"(\d+\.\d+\.\d+\.\d+)\s*-\s*(\d+\.\d+\.\d+\.\d+)", ip_str)
     if match:
@@ -111,14 +111,14 @@ def is_redundant(rule1: Dict, rule2: Dict) -> bool:
     logging.info("FUNCTION: is_redundant()")
 
     if "Enabled" in rule1.get("Status", "") and "Enabled" in rule2.get("Status", ""):
-        source_match = all(any(is_subnet_of(src2, src1) for src1 in rule1["Source"]) for src2 in rule2["Source"])
-        #print(f"Source_match: {source_match}")
-        destination_match = all(any(is_subnet_of(dst2, dst1) for dst1 in rule1["Destination"]) for dst2 in rule2["Destination"])
-        #print(f"Destination_match: {destination_match}")
-        service_match = any(any(is_port_range_subset(srv1, srv2) or is_port_range_subset(srv2, srv1) for srv1 in rule1["Service"]) for srv2 in rule2["Service"])    # "ANY" hataa que service_match sea True en cualquiera de las reglas
-        #print(f"Service_match: {service_match}")
+        source_match = is_subnet_of(rule1.get("Source")[0], rule2.get("Source")[0])
+        # print(f"Source_match: {source_match}")
+        destination_match = is_subnet_of(rule1.get("Destination")[0], rule2.get("Destination")[0])
+        # print(f"Destination_match: {destination_match}")
+        service_match = is_port_range_subset(rule1.get("Service")[0], rule2.get("Service")[0]) 
+        # print(f"Service_match: {service_match}")
         action_match = rule1["Action"] == rule2["Action"]
-        #print(f"Action_match: {action_match}")
+        # print(f"Action_match: {action_match}")
         return source_match and destination_match and service_match and action_match
     else: 
         return False
@@ -240,23 +240,3 @@ def is_shadowed(rule_lower: Dict, rule_upper: Dict):
                 return True, "Partially Shadowed" 
             return True, "Fully Shadowed"
     return False, "Not Shadowed"
-
-# def detect_shadow_rules(rules: List[Dict]) -> List[Dict]:
-#     """
-#     Detecta reglas shadowing, asegurando que una regla superior opaca a una inferior.
-#     """
-    
-#     shadowed_rules = []
-#     for i, rule_upper in enumerate(rules):
-#         for j, rule_lower in enumerate(rules):
-#             if i != j:  # Se asegura de comparar solo reglas superiores contra inferiores
-#                 shadowed, conflict_type = is_shadowed(rule_upper, rule_lower)
-#                 if shadowed == True:
-#                     logging.info(f"CONFLICT DETECTED: Rules with IDs: {rule_lower['ID']} is {conflict_type.upper()} with {rule_upper['ID']}.")
-#                     shadowed_rules.append({
-#                         "Rule1": rule_upper,
-#                         "Rule2": rule_lower,
-#                         "Conflict Type": conflict_type
-#                     })
-#     return shadowed_rules
-
