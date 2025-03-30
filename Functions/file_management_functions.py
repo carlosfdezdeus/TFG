@@ -1,7 +1,9 @@
 from Functions.config import DB_FW_CONFLICTS, DATABASES_DIR, JSON_FILE_PATH, CRITICALITY, CONFLICT_GRAPH_PATH
 import json, sqlite3, os, logging
 import matplotlib.pyplot as plt
+import pandas as pd
 from typing import List, Dict
+
 
 
 def load_rules_from_file(filename=JSON_FILE_PATH) -> List[Dict]:
@@ -155,3 +157,32 @@ def save_conflict_graph(fig, path):
     fig.tight_layout()
     fig.savefig(path, format=path.split('.')[-1])
     print(f"[INFO] Grafo guardado en: {path}")
+
+def get_hits():
+    conn = sqlite3.connect(DB_FW_CONFLICTS)
+    cursor = conn.cursor()
+
+    query = """
+    SELECT id_rule_1, hit_count_rule_1, id_rule_2, hit_count_rule_2
+    FROM firewall_conflict_rules
+    """
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    conn.close()
+
+    hits_per_rule = {}
+
+    for id1, hits1, id2, hits2 in rows:
+        # Regla 1
+        if id1 is not None:
+            id1 = int(id1)
+            hits1 = hits1 if hits1 else 0
+            hits_per_rule[id1] = max(hits1, hits_per_rule.get(id1, 0))
+        
+        # Regla 2
+        if id2 not in ("NULL", None):
+            id2 = int(id2)
+            hits2 = hits2 if hits2 else 0
+            hits_per_rule[id2] = max(hits2, hits_per_rule.get(id2, 0))
+
+    return hits_per_rule
