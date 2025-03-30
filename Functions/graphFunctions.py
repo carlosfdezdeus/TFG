@@ -1,5 +1,6 @@
 import sqlite3
 import networkx as nx
+import numpy as np
 from matplotlib.patches import FancyArrowPatch
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D  
@@ -73,6 +74,43 @@ def draw_conflict_graph(show=True):
 
     nx.draw_networkx_nodes(G, pos, node_size=1200, node_color='skyblue', ax=ax)
     nx.draw_networkx_labels(G, pos, font_size=10, font_weight='bold', ax=ax)
+
+    # Mapeo de conflictos por nodo
+    node_conflict_map = defaultdict(list)
+    for conflict_type, nodes in node_conflicts.items():
+        if conflict_type in ["Redundant", "Fully Shadowed", "Partially Shadowed"]:
+            continue
+        color = UNARY_CONFLICT_COLORS.get(conflict_type, "gray")
+        for node in nodes:
+            node_conflict_map[node].append(color)
+
+    # Calcular el centroide del grafo
+    all_x = [x for x, y in pos.values()]
+    all_y = [y for x, y in pos.values()]
+    center_x = sum(all_x) / len(all_x)
+    center_y = sum(all_y) / len(all_y)
+
+    # Dibujar los puntos alejados del centroide (dirección radial)
+    spacing = 0.06
+    for node, colors in node_conflict_map.items():
+        if node in pos:
+            x, y = pos[node]
+            dx = x - center_x
+            dy = y - center_y
+            norm = np.hypot(dx, dy)
+            if norm == 0:
+                dx, dy = 1, 0  # default right
+                norm = 1
+            dx /= norm
+            dy /= norm
+            base_x = x + dx * 0.15
+            base_y = y + dy * 0.15
+            for i, color in enumerate(colors):
+                dot_x = base_x + dx * i * spacing
+                dot_y = base_y + dy * i * spacing
+                ax.plot(dot_x, dot_y, 'o', color=color, markersize=10)
+
+
 
     legend_lines = [
         Line2D([0], [0], color=color, linestyle=style, linewidth=2, label=conf)
