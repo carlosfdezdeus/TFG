@@ -1,4 +1,5 @@
-from Functions.graphFunctions import plot_graph
+from Functions.graphFunctions import draw_conflict_graph
+#, prueba, draw_conflict_graph
 import argparse
 
 if __name__ == '__main__':
@@ -28,4 +29,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     # Llamar a la función con el parámetro seleccionado desde la terminal
-    plot_graph(show_graph=args.show_graph)
+    draw_conflict_graph(show=args.show_graph)

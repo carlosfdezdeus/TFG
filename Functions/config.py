@@ -57,25 +57,23 @@ CRITICALITY = {
     "Remaining traffic not denied": "Critical"
 }
 
-CONFLICT_STYLES = {
-    # Low - Verde
-    "Not in use": {"color": "green", "style": "-"},  # Línea sólida
-    "Disabled": {"color": "green", "style": "--"},  # Línea discontinua
-    "Redundant": {"color": "green", "style": "-."},  # Línea punteada
+# Estilos para los tipos de conflicto entre nodos
+CONFLICT_LINE_STYLES = {
+    "Redundant": ("solid", "green"),
+    "Fully Shadowed": ("dashed", "orange"),
+    "Partially Shadowed": ("dotted", "orange")
+}
 
-    # Medium - Amarillo
-    "Fully Shadowed": {"color": "orange", "style": "-"},  # Línea sólida
-    "Partially Shadowed": {"color": "orange", "style": "--"},  # Línea discontinua
-    "Bidirectional": {"color": "orange", "style": "-."},  # Línea punteada
-    "Any: Application/protocol": {"color": "orange", "style": ":"},  # Línea de puntos
-    "Any: Origin": {"color": "orange", "style": (0, (3, 1, 1, 1))},  # Patrón personalizado (línea segmentada)
-
-    # High - Rojo
-    "Any: Destination": {"color": "red", "style": "-"},  # Línea sólida
-    "Insecure": {"color": "red", "style": "--"},  # Línea discontinua
-
-    # Critical - Negro
-    "Any: 2 fields": {"color": "black", "style": "-"},  # Línea de puntos
-    "Any: 3 fields": {"color": "black", "style": "-."},  # Línea punteada
-    "Remaining traffic not denied": {"color": "black", "style": "-."},  # Línea discontinua
+# Asignación de colores para conflictos con NULL
+UNARY_CONFLICT_COLORS = {
+    "Not in use": "green",
+    "Disabled": "green",
+    "Bidirectional": "orange",
+    "Any: Application/protocol": "orange",
+    "Any: Origin": "orange",
+    "Any: Destination": "red",
+    "Insecure": "red",
+    "Any: 2 fields": "black",
+    "Any: 3 fields": "black",
+    "Remaining traffic not denied": "black"
 }

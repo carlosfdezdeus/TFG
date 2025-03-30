@@ -1,10 +1,11 @@
 import sqlite3
 import networkx as nx
+from matplotlib.patches import FancyArrowPatch
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D  
-from Functions.config import DB_FW_CONFLICTS, CONFLICT_STYLES, CONFLICT_GRAPH_PATH
-
-# Diccionario de estilos por tipo de conflicto
+from collections import defaultdict, Counter
+from Functions.config import DB_FW_CONFLICTS, CONFLICT_GRAPH_PATH, CONFLICT_LINE_STYLES, UNARY_CONFLICT_COLORS
+from Functions.file_management_functions import save_conflict_graph
 
 
 def getConflicts():
@@ -16,73 +17,95 @@ def getConflicts():
     conflicts = cursor.fetchall()
 
     conn.close()
+
+    print(conflicts)
     
     return conflicts
 
-def graph_creator():
-    conflicts = getConflicts()
+# Construir grafo con estilos
+def build_conflict_graph(conflicts):
+    G = nx.Graph()
+    edge_styles = defaultdict(set)
+    node_conflicts = defaultdict(set)
 
-    conflictGraph = nx.Graph()
-    # Agregar nodos y aristas con etiquetas de conflicto
     for rule1, rule2, conflict_type in conflicts:
-        edge_style = CONFLICT_STYLES.get(conflict_type.split(" (")[0], {"color": "gray", "style": "-"})  # Evitar error si no está en diccionario
-        conflictGraph.add_edge(rule1, rule2, conflict_type=conflict_type, **edge_style)
+        print(f"{rule1} - {rule2}: {conflict_type}")
 
+        rule1 = int(rule1)
+        if rule2 != "NULL":
+            rule2 = int(rule2)
+            if conflict_type in CONFLICT_LINE_STYLES:
+                G.add_node(rule1)
+                G.add_node(rule2)
+                edge_styles[(min(rule1, rule2), max(rule1, rule2))].add(conflict_type)
+        else:
+            G.add_node(rule1)
+            node_conflicts[conflict_type].add(rule1)
 
-    return conflictGraph
+    return G, edge_styles, node_conflicts
 
+# Dibujar el grafo y la leyenda
+def draw_conflict_graph(show=True):
+    conflicts = getConflicts()
+    G, edge_styles, node_conflicts = build_conflict_graph(conflicts)
 
-def plot_graph(show_graph=True):
-    """Genera el grafo de conflictos y lo guarda en un archivo PDF."""
-    conflictGraph = graph_creator()  
+    fig = plt.figure(figsize=(14, 10))
+    ax = fig.add_subplot(1, 1, 1)
+    pos = nx.spring_layout(G, seed=42)
 
-    # Crear figura
-    plt.figure(figsize=(10, 7))
-    pos = nx.spring_layout(conflictGraph)  
+    for (n1, n2), conflict_types in edge_styles.items():
+        conflict_types = list(conflict_types)
+        total = len(conflict_types)
+        for i, conflict_type in enumerate(conflict_types):
+            style, color = CONFLICT_LINE_STYLES[conflict_type]
+            angle = 0.2 * (i - (total - 1) / 2)
+            arrow = FancyArrowPatch(
+                posA=pos[n1],
+                posB=pos[n2],
+                connectionstyle=f"arc3,rad={angle}",
+                arrowstyle='-',
+                linewidth=2,
+                linestyle=style,
+                color=color,
+                alpha=0.8
+            )
+            ax.add_patch(arrow)
 
-    # Dibujar nodos
-    nx.draw(conflictGraph, pos, with_labels=True, node_color="lightblue", edge_color="gray", node_size=2000, font_size=12)
+    nx.draw_networkx_nodes(G, pos, node_size=1200, node_color='skyblue', ax=ax)
+    nx.draw_networkx_labels(G, pos, font_size=10, font_weight='bold', ax=ax)
 
-    # Dibujar aristas con estilos diferentes
-    for (u, v, attrs) in conflictGraph.edges(data=True):
-        nx.draw_networkx_edges(
-            conflictGraph, pos, edgelist=[(u, v)], edge_color=attrs["color"], style=attrs["style"], width=2
-        )
-
-    # Crear la leyenda
-    legend_elements = [
-        Line2D([0], [0], color=style["color"], linestyle=style["style"], lw=2, label=conflict_type)
-        for conflict_type, style in CONFLICT_STYLES.items()
+    legend_lines = [
+        Line2D([0], [0], color=color, linestyle=style, linewidth=2, label=conf)
+        for conf, (style, color) in CONFLICT_LINE_STYLES.items()
     ]
-    
-    plt.legend(handles=legend_elements, title="Tipos de Conflicto", loc="best")
-    plt.title("Grafo de Conflictos entre Reglas de Firewall")
 
-    # Guardar la figura en un archivo PDF
-    plt.savefig(CONFLICT_GRAPH_PATH, format="pdf", bbox_inches="tight")
-    
-    if show_graph:
+    grouped = defaultdict(list)
+    for conflict, nodes in node_conflicts.items():
+        color = UNARY_CONFLICT_COLORS.get(conflict, "gray")
+        label = f"{conflict}: {', '.join(map(str, sorted(nodes)))}"
+        grouped[color].append(label)
+
+    for color in ["green", "orange", "red", "black"]:
+        for label in grouped.get(color, []):
+            legend_lines.append(
+                Line2D([0], [0],
+                       marker='o',
+                       linestyle='None',
+                       color='white',
+                       markerfacecolor=color,
+                       markersize=10,
+                       label=label)
+            )
+
+    ax.legend(handles=legend_lines, loc='center left', bbox_to_anchor=(1, 0.5), fontsize='small', frameon=True)
+    ax.set_title("Grafo de Conflictos de Reglas de Firewall")
+    ax.axis('off')
+
+    # 🔁 Guardar automáticamente
+    save_conflict_graph(fig, path=CONFLICT_GRAPH_PATH)
+
+    # Mostrar si se pide
+    if show:
         plt.show()
-
-    print(f"✅ Grafo guardado en: {CONFLICT_GRAPH_PATH}")
-    if not show_graph:
-        print("ℹ️ El gráfico se ha guardado, pero no se mostrará en pantalla.")
-
-    
-
-# def plot_graph():
-#     conflictGraph = graph_creator()
-#     # Dibujar el grafo
-#     plt.figure(figsize=(10, 7))
-#     pos = nx.spring_layout(conflictGraph)  # Algoritmo de distribución de nodos
-#     edge_labels = nx.get_edge_attributes(conflictGraph, 'label')  # Etiquetas de conflictos
-
-#     # Dibujar nodos y conexiones
-#     nx.draw(conflictGraph, pos, with_labels=True, node_color="lightblue", edge_color="gray", node_size=2000, font_size=12)
-#     nx.draw_networkx_edge_labels(conflictGraph, pos, edge_labels=edge_labels, font_size=9, bbox=dict(facecolor='white', edgecolor='none', alpha=0.7))
-
-#     plt.title("Grafo de Conflictos entre Reglas de Firewall")
-#     plt.show()
-
-
-
+    else:
+        plt.close(fig)

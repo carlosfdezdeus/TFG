@@ -1,6 +1,6 @@
-from Functions.config import DB_FW_CONFLICTS, DATABASES_DIR, JSON_FILE_PATH, CRITICALITY
+from Functions.config import DB_FW_CONFLICTS, DATABASES_DIR, JSON_FILE_PATH, CRITICALITY, CONFLICT_GRAPH_PATH
 import json, sqlite3, os, logging
-import pandas as pd
+import matplotlib.pyplot as plt
 from typing import List, Dict
 
 
@@ -148,4 +148,10 @@ def diplay_conflictive_rules():
     conn.close()
     
     for rule in rules:
-        print(rule)    
+        print(rule)  
+
+
+def save_conflict_graph(fig, path):
+    fig.tight_layout()
+    fig.savefig(path, format=path.split('.')[-1])
+    print(f"[INFO] Grafo guardado en: {path}")

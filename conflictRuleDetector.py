@@ -30,7 +30,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # Detección de reglas conflictivas:
     create_conflict_database()
     rules = load_rules_from_file()
 
