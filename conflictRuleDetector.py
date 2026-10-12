@@ -32,6 +32,7 @@ if __name__ == '__main__':
 
     create_conflict_database()
     rules = load_rules_from_file()
+    rules_to_optimize = rules
 
     last_enabled_rule = None  # Variable para almacenar la última regla habilitada
     for i, rule1 in enumerate(rules):   
@@ -54,9 +55,9 @@ if __name__ == '__main__':
         if have_any:
             logging.info(f"CONFLICT DETECTED: Rule with ID: {rule1['ID']} have the following conlict type, {conflict_type.upper()}.")
             insert_conflict_rule(rule1, None, conflict_type)
-    
+
         for j, rule2 in enumerate(rules):
-            if i != j:
+            if i != j and rule2["ID"] > rule1["ID"]:
                 if is_redundant(rule1, rule2):
                     logging.info(f"CONFLICT DETECTED: Rules with IDs: {rule2['ID']} is REDUNDANT with {rule1['ID']}.")
                     insert_conflict_rule(rule1, rule2, "Redundant")

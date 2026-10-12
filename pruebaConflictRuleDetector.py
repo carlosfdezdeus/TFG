@@ -1,4 +1,4 @@
-from Functions.conflict_detection_functions import is_port_range_subset, is_subnet_of,is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied, is_disabled, is_not_in_use, is_shadowed
+from Functions.conflict_detection_functions import is_port_range_subset,is_redundant, rule_have_x_any, have_insecure_protocols, is_remaining_traffic_denied, is_disabled, is_not_in_use, is_shadowed, is_subnet_of_v2
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -7,6 +7,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # ******************** PRUEBA FUNCIÓN SOLAPE DE PUERTOS ******************** #
 # ************************************************************************** #
 print("- PRUEBA FUNCIÓN SOLAPE DE PUERTOS:")
+print(f"    ¿Hay solape entre ANY y 85,95? - {is_port_range_subset('ANY', '85,95')}")  # True
+print(f"    ¿Hay solape entre 80-90 y ANY? - {is_port_range_subset('80-90', 'ANY')}")  # True
+
+
 print(f"    ¿Hay solape entre 80-90 y 85,95? - {is_port_range_subset('80-90', '85,95')}")  # True
 print(f"    ¿Hay solape entre 80,90 y 75? - {is_port_range_subset('80,90', '75')}")       # False
 print(f"    ¿Hay solape entre 80,75 y 75? - {is_port_range_subset('80,75', '75')}")       # True
@@ -21,15 +25,18 @@ print("")
 # ******************** PRUEBA FUNCIÓN SOLAPE DE SUBREDES ******************* #
 # ************************************************************************** #
 print("- PRUEBA FUNCIÓN SOLAPE DE SUBREDES:")
-print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.0/23? - {is_subnet_of('10.0.0.0/24', '10.0.0.0/23')}")  # partial
-print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.1.0/24? - {is_subnet_of('10.0.0.0/24', '10.0.1.0/24')}")  # False
-print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.0/24? - {is_subnet_of('10.0.0.0/24', '10.0.0.0/24')}")  # True
-print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.128/25? - {is_subnet_of('10.0.0.0/24', '10.0.0.128/25')}")  # partial
-print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.64/26? - {is_subnet_of('10.0.0.0/24', '10.0.0.64/26')}")  # partial
-print(f"    ¿Hay solape entre 10.0.0.0/25 y 10.0.0.0/24? - {is_subnet_of('10.0.0.0/25', '10.0.0.0/24')}")  # partial
-print(f"    ¿Hay solape entre 10.0.0.50 y 10.0.0.0/24? - {is_subnet_of('10.0.0.50', '10.0.0.0/24')}")  # True
-print(f"    ¿Hay solape entre 10.0.0.50,10.0.0.100 y 10.0.0.0/25? - {is_subnet_of('10.0.0.50,10.0.0.100', '10.0.0.0/25')}")  # partial
-print(f"    ¿Hay solape entre 10.0.0.50-10.0.0.100 y 10.0.0.1,10.0.0.100? - {is_subnet_of('10.0.0.50-10.0.0.100', '10.0.0.1,10.0.0.100')}")  # partial
+print(f"    ¿Hay solape entre 0.0.0.0/0 y 10.0.0.0/24? - {is_subnet_of_v2('0.0.0.0/0', '10.0.0.0/24')}")  # True
+print(f"    ¿Hay solape entre 10.0.0.0/24 y 0.0.0.0/0? - {is_subnet_of_v2('10.0.0.0/24', '0.0.0.0/0')}")  # partial
+
+print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.0/23? - {is_subnet_of_v2('10.0.0.0/24', '10.0.0.0/23')}")  # partial
+print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.1.0/24? - {is_subnet_of_v2('10.0.0.0/24', '10.0.1.0/24')}")  # False
+print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.0/24? - {is_subnet_of_v2('10.0.0.0/24', '10.0.0.0/24')}")  # True
+print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.128/25? - {is_subnet_of_v2('10.0.0.0/24', '10.0.0.128/25')}")  # partial
+print(f"    ¿Hay solape entre 10.0.0.0/24 y 10.0.0.64/26? - {is_subnet_of_v2('10.0.0.0/24', '10.0.0.64/26')}")  # partial
+print(f"    ¿Hay solape entre 10.0.0.0/25 y 10.0.0.0/24? - {is_subnet_of_v2('10.0.0.0/25', '10.0.0.0/24')}")  # partial
+print(f"    ¿Hay solape entre 10.0.0.50 y 10.0.0.0/24? - {is_subnet_of_v2('10.0.0.50', '10.0.0.0/24')}")  # True
+print(f"    ¿Hay solape entre 10.0.0.50,10.0.0.100 y 10.0.0.0/25? - {is_subnet_of_v2('10.0.0.50,10.0.0.100', '10.0.0.0/25')}")  # partial
+print(f"    ¿Hay solape entre 10.0.0.50-10.0.0.100 y 10.0.0.1,10.0.0.100? - {is_subnet_of_v2('10.0.0.50-10.0.0.100', '10.0.0.1,10.0.0.100')}")  # partial
 print("")
 
 
@@ -95,7 +102,7 @@ redundant_rule6 = {
 }  # Redundante con redundant_rule5 (ANY lo abarca todo)
 
 redundant_rule7 = {
-    "Source": ["192.168.100.1 - 192.168.100.10"],
+    "Source": ["172.132.0.0/24, 192.168.1.1"],
     "Destination": ["10.10.10.50"],
     "Service": ["80"],
     "Action": "ALLOW",
@@ -104,7 +111,7 @@ redundant_rule7 = {
 }  
 
 redundant_rule8 = {
-    "Source": ["192.168.100.1, 192.168.10.10"],
+    "Source": ["172.132.0.1"],
     "Destination": ["10.10.10.50"],
     "Service": ["80"],
     "Action": "ALLOW",
@@ -289,7 +296,7 @@ print("")
 rule1 = {
     "Source": ["192.168.1.0/24"],
     "Destination": ["10.0.0.0/24"],
-    "Service": ["21"],  # FTP (inseguro)
+    "Service": ["443, 53, 21, 47, 80, 81, 82, 83, 87, 443, 500, 4500, 500, 143, 993, 88, 123, 110, 1723, 554, 80, 25, 465, 22, 1024-65535, 85, 86, 90, 125, 451, 563, 587, 778, 779, 873, 880, 4, 8, 23, 1024-65535, 2000, 10000"],  # FTP (inseguro)
     "Action": "ALLOW",
     "Hit Count": "341",
     "Status": "Enabled"
@@ -507,11 +514,12 @@ print("")
 # ********************* PRUEBA FUNCIÓN REGLAS SHADOWED ********************* #
 # ************************************************************************** #
 test_rules = [
-    {"ID": 3, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80, 8080, 443"], "Action": "ALLOW", "Status": "Enabled"},
-    {"ID": 4, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080, 8081"], "Action": "DENY", "Status": "Enabled"},      # Partially Shadow with 3
-    {"ID": 5, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/16"], "Service": ["80"], "Action": "ALLOW", "Status": "Enabled"},             # Partially Shadow with 3
-    {"ID": 6, "Source": ["10.0.0.0/28"], "Destination": ["10.0.1.0/24"], "Service": ["80"], "Action": "DENY", "Status": "Enabled"}]             # Fully Shadow with 3 & 5
-
+    {"ID": 14, "Source": ["192.168.1.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["ALL"], "Action": "ALLOW", "Status": "Enabled"},
+    #{"ID": 16, "Source": ["192.168.1.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["ALL"], "Action": "DENY", "Status": "Enabled"},      # Partially Shadow with 3
+    {"ID": 103, "Source": ["192.168.1.0/24"], "Destination": ["10.0.1.0/24, 1.1.1.1"], "Service": ["ALL"], "Action": "DENY", "Status": "Enabled"},             # Partially Shadow with 3
+    #{"ID": 104, "Source": ["192.168.1.1"], "Destination": ["1.1.1.1"], "Service": ["ALL"], "Action": "DENY", "Status": "Enabled"},             # Partially Shadow with 3
+    {"ID": 105, "Source": ["0.0.0.0/0"], "Destination": ["0.0.0.0/0"], "Service": ["ALL"], "Action": "DENY", "Status": "Enabled"}]             # Partially Shadow with 3
+    
 # test_rules = [
 #     {"ID": 3, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["80, 8080, 443"], "Action": "ALLOW", "Status": "Enabled"},
 #     {"ID": 4, "Source": ["10.0.0.0/24"], "Destination": ["10.0.1.0/24"], "Service": ["8080, 8081"], "Action": "DENY", "Status": "Enabled"},      # Partially Shadow with 3
@@ -528,15 +536,124 @@ test_rules = [
 # ]
 
 # Ejecutamos pruebas
-print("- PRUEBA FUNCIÓN REGLAS SHADOW:")
+print("\n\n\n- PRUEBA FUNCIÓN REGLAS SHADOW:")
+conflicts = []
+for i, rule1 in enumerate(test_rules):
+    
+    print(f"  INICIO ITERACIÓN REGLA {rule1['ID']}")
+    
+    for j, rule2 in enumerate(test_rules):
+        print(int(rule2['ID']) > int(rule1['ID']))
+        if i != j and (int(rule2['ID']) > int(rule1['ID'])):
+            print(f"  Regla {rule1['ID']}: {rule1}")
+            print(f"  Regla {rule2['ID']}: {rule2}")
+            
+            shadowed, conflict_type = is_shadowed(rule1, rule2)
+            if shadowed:
+                logging.info(f"CONFLICT DETECTED: Rule with ID {rule2['ID']} is {conflict_type.upper()} with {rule1['ID']}.")
+                print(f"  Regla {rule1['ID']}: {rule1}")
+                print(f"  Regla {rule2['ID']}: {rule2}")
+                print(f"  Shadow Type: {conflict_type}")
+                print("  --------------------------------")
+                conflicts.append(conflict_type)
+        print(f"FIN ITERACIÓN REGLA {rule1['ID']} con {rule2['ID']}")
+    print(f"  FIN ITERACIÓN REGLA {rule1['ID']}\n")
 
-for i, rule1 in enumerate(test_rules):  
-        for j, rule2 in enumerate(test_rules):
-            if i != j:
-                shadowed, conflict_type = is_shadowed(rule1, rule2)
-                if shadowed == True:
-                    logging.info(f"CONFLICT DETECTED: Rules with IDs: {rule2['ID']} is {conflict_type.upper()} with {rule1['ID']}.")
-                    print(f"  Regla {rule1['ID']}: {rule1}")
-                    print(f"  Regla {rule2['ID']}: {rule2}")
-                    print(f"  Shadow Type: {conflict_type}")
-                    print("  --------------------------------")
+print(conflicts)
+
+
+
+cases = [
+        # Subred completamente contenida
+        ("10.0.0.0/8", "10.1.1.0/24", True),
+        ("192.168.1.0/24", "192.168.1.0/25", True),
+
+        # Subred parcialmente solapada (corregido)
+        ("192.168.1.0/25", "192.168.1.64/24", "Partial"),
+
+        # Subred completamente fuera
+        ("192.168.1.0/24", "10.0.0.0/24", False),
+
+        # IP individual dentro
+        ("192.168.1.0/24", "192.168.1.42", True),
+
+        # IP fuera
+        ("192.168.1.0/24", "10.0.0.1", False),
+
+        # Rango completamente dentro
+        ("192.168.1.0/24", "192.168.1.1 - 192.168.1.3", True),
+
+        # Rango parcialmente dentro
+        ("192.168.1.0/24", "192.168.1.250 - 192.168.2.10", "Partial"),
+
+        # Mezcla: IP + subred contenidas
+        ("192.168.0.0/16", "192.168.1.1, 192.168.1.0/24", True),
+
+        # Mezcla: una dentro y otra fuera
+        ("192.168.1.0/24", "192.168.1.1, 10.0.0.1", "Partial"),
+
+        # 0.0.0.0/0 (todo el espacio) como contenedor
+        ("0.0.0.0/0", "8.8.8.8", True),
+        ("0.0.0.0/0", "192.168.1.0/24", True),
+        ("0.0.0.0/0", "10.0.0.0/8, 8.8.8.8", True),
+
+        # Inverso: elemento contra 0.0.0.0/0
+        ("192.168.1.0/24", "0.0.0.0/0", "Partial"),
+        ("192.168.1.1", "0.0.0.0/0", "Partial"),
+
+        # ✅ Nuevo caso: mezcla rango + red vs dos subredes
+        ("10.0.0.1-10.0.0.15, 10.0.1.0/24", "10.0.0.0/24, 10.0.1.0/24", "Partial"),
+
+        # ✅ Nuevo caso: set + 0.0.0.0
+        ("10.0.1.0/24, 1.1.1.1", "0.0.0.0/0", "Partial"),
+
+        ("172.132.0.1", "172.132.0.0/24, 192.168.1.1", "Partial"),
+
+        ("172.132.0.0/24, 192.168.1.1", "172.132.0.1", True),
+
+
+    ]
+
+for i, (subnet1, subnet2, expected) in enumerate(cases, 1):
+    result = is_subnet_of_v2(subnet1, subnet2)
+    print(result)
+    assert result == expected, f"❌ Test {i} failed: {subnet1} vs {subnet2} => got {result}, expected {expected}"
+    print(f"✅ Test {i} passed: {subnet1} vs {subnet2} => {result}")
+
+
+print("\n- TEST FORMAL: is_redundant con asserts")
+
+redundant_test_cases = [
+    # Totalmente redundante
+    (redundant_rule1, redundant_rule2, True),
+    (redundant_rule3, redundant_rule4, True),
+    (redundant_rule5, redundant_rule6, True),
+    (redundant_rule6, redundant_rule7, False),
+    (redundant_rule7, redundant_rule8, True),
+
+    # Distinta fuente
+    (ruleA, ruleB, False),
+
+    # Distinto destino
+    (ruleC, ruleD, False),
+
+    # Distinto servicio
+    (ruleE, ruleF, False),
+
+    # Distinta acción
+    (ruleG, ruleH, False),
+
+    # No hay solapamiento en ningún campo
+    (ruleI, ruleJ, False),
+]
+
+result = is_subnet_of_v2("172.132.0.1", "172.132.0.0/24, 192.168.1.1")
+print(f"Resultado Prueba: {result}")
+
+for i, (r1, r2, expected) in enumerate(redundant_test_cases, start=1):
+    print(f"\nTest {i}:")
+    print(f"    - Rule1: {r1}")
+    print(f"    - Rule2: {r2}")
+    result = is_redundant(r1, r2)
+    assert result == expected, f"❌ Test {i} failed: expected {expected}, got {result}"
+    print(f"✅ Test {i} passed: expected {expected}, got {result}")
