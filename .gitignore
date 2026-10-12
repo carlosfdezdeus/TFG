@@ -15,3 +15,19 @@ __pycache__/
 .idea/
 .env
 node_modules/
+
+# Datos confidenciales: informes de revisión de firewall (no subir)
+*.xls
+*.xlsx
+*.xlsm
+~$*
+Input data/Detalle individual firewalls/
+Input data/Detalle individual firewalls.zip
+
+# Copia comprimida de los diagramas de flujo (ya versionados como PNG)
+Flow diagrams.zip
+
+# Datos reales derivados de cliente (no subir)
+Input data/firewall_cliente_WiFi_rules.json
+Databases/*.db
+Output data/

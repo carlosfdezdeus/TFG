@@ -1,0 +1,45 @@
+Las reglas de seguridad que indican problemas de seguridad son:
+    - NOT IN USE 
+    - FULLY SHADOW 
+    - PARTIALLY SHADOW 
+    - ANY 
+    - BIDIRECCIONALES (dependiendo de la regla)
+
+
+
+
+Estoy haciendo una función en Python que tiene la variable redundant_rules (conflictos de reglas de firewall) que contiene varias filas de un BD SQL (id_rule_1, source_rule_1, destination_rule_1 service_rule_1, id_rule_2, source_rule_2, destination_rule_2, service_rule_2). 
+Quiero que cuando dos reglas estén en un conflicto se coja la más general, es decir, la que englobe más casos, pero si la regla más general es una regla que contenga ANY o subredes 0.0.0.0/0 no se escogerá. y se recomendará borrar la otra regla.
+
+EEstoy trabajando con una base de datos SQL que contiene conflictos entre reglas de firewall, y quiero procesar esos conflictos con Python. Tengo una variable redundant_rules que es una lista de diccionarios o un DataFrame de pandas. Cada fila representa un conflicto entre dos reglas, con los siguientes campos:
+
+id_rule_1, source_rule_1, destination_rule_1, service_rule_1
+id_rule_2, source_rule_2, destination_rule_2, service_rule_2
+Quiero una función en Python que para cada conflicto:
+
+Determine cuál de las dos reglas es más general (la que engloba más casos en source, destination y service) y recomiende eliminar la otra.
+Por ejemplo, los valores ANY o 0.0.0.0/0 se consideran más generales.
+Sin embargo, si la regla más general contiene ANY o 0.0.0.0/0 en cualquiera de sus campos, no se debe recomendar eliminar la otra regla, es decir, no se hará nada en ese caso.
+La función debe devolver una lista con recomendaciones de acción en este formato:
+"Eliminar la regla con ID X porque está contenida en la regla con ID Y"
+Notas:
+
+Las IPs pueden estar en formato x.x.x.x/y (CIDR), y los servicios pueden ser ANY, un número de puerto como 80, o un rango como 1000-2000.
+Quiero que la comparación de subredes sea precisa, usando la librería ipaddress.
+La función debe ignorar diferencias entre mayúsculas y minúsculas.
+Por favor, escribe esa función en Python y agrega comentarios para entender mejor cómo funciona.
+
+Te voy a dar algunos casos de resolución para entenderlo:
+CASOS RESOLUCIÓN REDUNDACIAS
+    1 | 192.168.0.0/24 | 10.0.0.0/24 | 8080
+    2 | 192.168.0.0/24 | 10.0.0.5    | 8080
+    RESOLUCIÓN: Me quedo con la 1
+
+    1 | 192.168.0.0/24 | 10.0.0.5    | 8080
+    2 | 192.168.1.1    | 10.0.0.0/24 | 8080
+    RESOLUCIÓN: Ambas son igual de generales
+
+    1 | 192.168.0.0/24 | 10.0.0.5    | 8080, 8081
+    2 | 192.168.1.1    | 10.0.0.0/24 | 8080
+    RESOLUCIÓN: Me quedo con la 1 (es más generalista)
+
